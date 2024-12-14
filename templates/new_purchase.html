@@ -1,125 +1,183 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>New Purchase Request</title>
+    <title>[MY25] Purchase Request Form</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
 </head>
 <body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-6">New Purchase Request</h1>
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 class="text-3xl font-bold mb-6">[MY25] Purchase Request Form</h1>
         
-        <div class="bg-white shadow-md rounded px-8 py-6">
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <form method="POST">
-                <div class="mb-4">
-                    <label class="block mb-2">Date Purchased:</label>
-                    <input type="date" name="purchase_date" required 
-                           class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2">Is this urgent or special/large order?</label>
-                    <select name="urgency" required class="w-full border rounded px-2 py-1">
-                        <option value="urgent">Urgent</option>
-                        <option value="special">Special/Large</option>
-                        <option value="normal">Normal</option>
-                    </select>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2">Company/Vendor Name:</label>
-                    <input type="text" name="vendor_name" required 
-                           class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2">Item Name/Description:</label>
-                    <textarea name="item_name" required 
-                            class="w-full border rounded px-2 py-1"></textarea>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2">Link or Additional Information:</label>
-                    <textarea name="item_link" 
-                            class="w-full border rounded px-2 py-1"></textarea>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2">Quantity:</label>
-                    <input type="number" name="quantity" required 
-                           class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2">Notes:</label>
-                    <textarea name="notes" 
-                            class="w-full border rounded px-2 py-1"></textarea>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2">Purpose (Why do you need this item?):</label>
-                    <textarea name="purpose" required 
-                            class="w-full border rounded px-2 py-1"></textarea>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2">Total Cost ($):</label>
-                    <input type="number" step="0.01" name="price" required 
-                           class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2">Estimated Shipping Cost ($):</label>
-                    <input type="number" step="0.01" name="shipping_cost" 
-                           class="w-full border rounded px-2 py-1">
-                </div>
-
-                {% if current_user.is_requester() %}
-                <div class="mb-4">
-                    <label class="block mb-2">Verifying Executive:</label>
-                    <select name="exec_verifier" required class="w-full border rounded px-2 py-1">
-                        <option value="">Select an Executive</option>
-                        <option value="Exec">Exec (exec@mit.edu)</option>
-                    </select>
-                </div>
-                {% endif %}
-
-                <div class="mb-4">
-                    <label class="block mb-2">Your Name:</label>
-                    <input type="text" name="requester_name" required 
-                           class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2">Subteam:</label>
-                    <input type="text" name="subteam" required 
-                           class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2">Sub-project:</label>
-                    <input type="text" name="subproject" required 
-                           class="w-full border rounded px-2 py-1">
-                </div>
-
-                <div class="flex justify-end gap-2">
-                    <a href="{{ url_for('purchases') }}" 
-                       class="bg-gray-300 px-4 py-2 rounded">Cancel</a>
-                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
-                        Submit Purchase Request
-                    </button>
-                </div>
-            </form>
+        <!-- Important Information Section -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+            <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                <li>Reach out to the purchasing leads if you have questions: 
+                    <a href="mailto:ktruong4@mit.edu" class="text-blue-600 hover:underline">Kayla (ktruong4@mit.edu)</a>, 
+                    <a href="mailto:vjhaveri@mit.edu" class="text-blue-600 hover:underline">Veer (vjhaveri@mit.edu)</a>
+                </li>
+                <li>Slack Kayla or Veer after submitting form so we can order ASAP</li>
+                <li>Check the [MY25] Master Budget sheet for status/history</li>
+            </ul>
         </div>
+
+        <!-- Guidelines Section -->
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6 mb-8 rounded-lg">
+            <h2 class="text-xl font-bold mb-3">Guidelines</h2>
+            <p class="mb-2">Before submitting this form, please:</p>
+            <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                <li>Check to make sure we don't already have this in shop</li>
+                <li>Check for the lowest price</li>
+                <li>Obtain exec approval (Eric, Monica, Hez, Alex, or Claudius)</li>
+            </ul>
+            <p class="mt-4 text-red-600 font-semibold">
+                If you need something urgently, dm the purchasing leads & the appropriate exec
+            </p>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <!-- Your Name Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Your Name (first & last)</h2>
+                <input type="text" name="requester_name" required 
+                       class="w-full border rounded px-2 py-1">
+            </div>
+
+            <!-- Urgency Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Is this an urgent or special/large order?</h2>
+                <ul class="list-disc pl-5 space-y-2 text-gray-700 mb-4">
+                    <li><strong>Urgent:</strong> you need this ordered ASAP. Must be exec-approved. Write what shipping (2-day, etc) is needed as a comment at the end of the form. Reach out to purchasing leads ASAP.</li>
+                    <li><strong>Special/large:</strong> over $3k or it will need cooperation between exec, purchaser, requestor, and Sandi. If yes, prepare by having an itemized order and reach out to purchasing leads ASAP.</li>
+                </ul>
+                <select name="urgency" required class="w-full border rounded px-2 py-1">
+                    <option value="">Select an option</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="special">Special/Large</option>
+                    <option value="both">Both</option>
+                    <option value="normal">Neither</option>
+                </select>
+            </div>
+
+            <!-- Company Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Name of Company</h2>
+                <ul class="list-disc pl-5 space-y-2 text-gray-700 mb-4">
+                    <li>First preference: McMaster, Digikey, and Amazon</li>
+                    <li><a href="https://docs.google.com/spreadsheets/d/1Yc5VMqho-xrae6zBpSbBLjzb9Fmuj89p41ogwmlUk8Q/edit#gid=0" 
+                           target="_blank" 
+                           class="text-blue-600 hover:underline">Reference for preferred vendors</a></li>
+                </ul>
+                <input type="text" name="vendor_name" required 
+                       class="w-full border rounded px-2 py-1">
+            </div>
+
+            <!-- Items Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Name/Description of Items Needed</h2>
+                <ul class="list-disc pl-5 space-y-2 text-gray-700 mb-4">
+                    <li>Consolidate items as best you can. If you can link it as a whole cart (e.g. Digikey/Mouser/McMaster), do that and write "Basket". Otherwise, each item needs its own form.</li>
+                </ul>
+                <textarea name="item_name" required 
+                        class="w-full border rounded px-2 py-1 h-24"></textarea>
+            </div>
+
+            <!-- Quantity Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Quantity Needed</h2>
+                <input type="number" name="quantity" required 
+                       class="w-full border rounded px-2 py-1">
+            </div>
+
+            <!-- Link Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Link to Items/Basket</h2>
+                <ul class="list-disc pl-5 space-y-2 text-gray-700 mb-4">
+                    <li>Provide a *single* link to the item or the cart. If there is no link, write the name of the company (McMaster, Digikey, Fictiv, etc).</li>
+                </ul>
+                <input type="text" name="item_link" required 
+                       class="w-full border rounded px-2 py-1">
+            </div>
+
+            <!-- Cost Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Total Cost ($)</h2>
+                <ul class="list-disc pl-5 space-y-2 text-gray-700 mb-4">
+                    <li>Don't account for sales tax or shipping</li>
+                </ul>
+                <input type="number" step="0.01" name="price" required 
+                       class="w-full border rounded px-2 py-1">
+            </div>
+
+            <!-- Shipping Cost Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Shipping Cost ($)</h2>
+                <ul class="list-disc pl-5 space-y-2 text-gray-700 mb-4">
+                    <li>Use zip code 02139 for shipping estimate</li>
+                </ul>
+                <input type="number" step="0.01" name="shipping_cost" 
+                       class="w-full border rounded px-2 py-1">
+            </div>
+
+            <!-- Purpose Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Why do you need this item?</h2>
+                <ul class="list-disc pl-5 space-y-2 text-gray-700 mb-4">
+                    <li>Keep this brief but descriptive; edgerton needs to know this for approvals</li>
+                </ul>
+                <textarea name="purpose" required 
+                        class="w-full border rounded px-2 py-1 h-24"></textarea>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Any notes? (Optional)</h2>
+                <textarea name="notes" 
+                        class="w-full border rounded px-2 py-1 h-24"></textarea>
+            </div>
+
+            <!-- Executive Section -->
+            {% if current_user.is_requester() %}
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Verifying Executive</h2>
+                <select name="exec_verifier" required class="w-full border rounded px-2 py-1">
+                    <option value="">Select an Executive</option>
+                    <option value="Exec">Exec (exec@mit.edu)</option>
+                </select>
+            </div>
+            {% endif %}
+
+            <!-- Subteam Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Subteam</h2>
+                <input type="text" name="subteam" required 
+                       class="w-full border rounded px-2 py-1">
+            </div>
+
+            <!-- Sub-project Section -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-lg">
+                <h2 class="text-xl font-bold mb-3">Sub-project</h2>
+                <input type="text" name="subproject" required 
+                       class="w-full border rounded px-2 py-1">
+            </div>
+
+            <div class="flex justify-end gap-2 mt-8">
+                <a href="{{ url_for('purchases') }}" 
+                   class="bg-gray-300 px-4 py-2 rounded">Cancel</a>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">
+                    Submit Purchase Request
+                </button>
+            </div>
+        </form>
     </div>
 </body>
 </html> 
