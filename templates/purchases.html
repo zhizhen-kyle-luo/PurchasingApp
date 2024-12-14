@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Purchases</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+</head>
+<body class="bg-gray-100">
+    {% macro render_purchase_table(purchases, user) %}
+    <table class="w-full">
+        <thead>
+            <tr>
+                <th class="px-4 py-2">Date</th>
+                <th class="px-4 py-2">Urgency</th>
+                <th class="px-4 py-2">Requester</th>
+                <th class="px-4 py-2">Item</th>
+                <th class="px-4 py-2">Vendor</th>
+                <th class="px-4 py-2">Price</th>
+                <th class="px-4 py-2">Approval Status</th>
+                <th class="px-4 py-2">Shipping Status</th>
+                <th class="px-4 py-2">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+            <tr class="{% if purchase.urgency == 'urgent' %}bg-red-50{% endif %}">
+                <td class="border px-4 py-2">{{ purchase.purchase_date.strftime('%Y-%m-%d') }}</td>
+                <td class="border px-4 py-2">{{ purchase.urgency }}</td>
+                <td class="border px-4 py-2">{{ purchase.requester_name }}</td>
+                <td class="border px-4 py-2">
+                    {{ purchase.item_name }}
+                    {% if purchase.item_link %}
+                    <br><span class="text-sm text-gray-600">({{ purchase.item_link }})</span>
+                    {% endif %}
+                </td>
+                <td class="border px-4 py-2">{{ purchase.vendor_name }}</td>
+                <td class="border px-4 py-2">${{ "%.2f"|format(purchase.price) }}</td>
+                <td class="border px-4 py-2">
+                    <span class="px-2 py-1 rounded 
+                        {% if purchase.approval_status == 'Pending Approval' %}bg-yellow-200 text-yellow-800
+                        {% elif purchase.approval_status == 'Approved' %}bg-green-200 text-green-800
+                        {% else %}bg-red-200 text-red-800{% endif %}">
+                        {{ purchase.approval_status }}
+                    </span>
+                </td>
+                <td class="border px-4 py-2">
+                    <span class="px-2 py-1 rounded 
+                        {% if purchase.status == 'Not Yet Shipped' %}bg-red-200 text-red-800
+                        {% elif purchase.status == 'Shipped' %}bg-yellow-200 text-yellow-800
+                        {% else %}bg-green-200 text-green-800{% endif %}">
+                        {{ purchase.status }}
+                    </span>
+                </td>
+                <td class="border px-4 py-2">
+                    <div class="flex gap-2">
+                        {% if (is_executive or is_business) and purchase.approval_status == 'Pending Approval' %}
+                            <button onclick="showApprovalModal('{{ purchase.id }}')" 
+                                    class="bg-green-500 text-white px-2 py-1 rounded">
+                                Review
+                            </button>
+                        {% endif %}
+                        
+                        {% if is_business or is_executive or purchase.user_id == user.id %}
+                            <button onclick="showUpdateModal('{{ purchase.id }}')" 
+                                    class="bg-blue-500 text-white px-2 py-1 rounded">
+                                Update Status
+                            </button>
+                        {% endif %}
+
+                        {% if is_business or is_executive %}
+                            <button onclick="showAdminModal('{{ purchase.id }}')" 
+                                    class="bg-purple-500 text-white px-2 py-1 rounded">
+                                Add Notes/Images
+                            </button>
+                        {% endif %}
+                    </div>
+
+                    {% if purchase.admin_notes or purchase.image_filename %}
+                        <div class="mt-2 text-sm">
+                            {% if purchase.admin_notes %}
+                                <div class="text-gray-600">Notes: {{ purchase.admin_notes }}</div>
+                            {% endif %}
+                            {% if purchase.image_filename %}
+                                <a href="{{ url_for('static', filename='uploads/' + purchase.image_filename) }}" 
+                                   target="_blank" class="text-blue-500 hover:underline">
+                                    View Image
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endmacro %}
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-4">
+                <h1 class="text-3xl font-bold">Hi {{ current_user.email.split('@')[0].capitalize() }}!</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                {% if is_requester or is_business or is_executive %}
+                <a href="{{ url_for('new_purchase') }}" class="bg-blue-500 text-white px-4 py-2 rounded">
+                    New Purchase Request
+                </a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="text-red-500 hover:underline">Logout</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- My Orders Section -->
+        <div class="bg-white shadow-md rounded px-8 py-6 mt-4">
+            <h2 class="text-2xl font-bold mb-4">My Orders</h2>
+            {% if not my_purchases %}
+                <p class="text-center text-gray-600">You haven't made any orders yet!</p>
+            {% else %}
+                <div class="overflow-x-auto">
+                    {{ render_purchase_table(my_purchases, current_user) }}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- All Orders Section -->
+        <div class="bg-white shadow-md rounded px-8 py-6 mt-8">
+            <h2 class="text-2xl font-bold mb-4">All Orders</h2>
+            {% if not all_purchases %}
+                <p class="text-center text-gray-600">No orders at the moment!</p>
+            {% else %}
+                <div class="overflow-x-auto">
+                    {{ render_purchase_table(all_purchases, current_user) }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div id="updateModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded shadow-lg">
+            <h2 class="text-xl font-bold mb-4">Update Purchase Status</h2>
+            <form id="updateForm" method="POST">
+                <div class="mb-4">
+                    <label class="block mb-2">Status:</label>
+                    <select name="status" class="w-full border rounded px-2 py-1" onchange="handleStatusChange(this)">
+                        <option value="Not Yet Shipped">Not Yet Shipped</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Arrived">Arrived</option>
+                    </select>
+                </div>
+                
+                <div id="shippingFields" class="hidden">
+                    <div class="mb-4">
+                        <label class="block mb-2">Tracking Number:</label>
+                        <input type="text" name="tracking_number" class="w-full border rounded px-2 py-1">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block mb-2">Shipping Confirmation Email:</label>
+                        <input type="text" name="shipping_confirmation_email" class="w-full border rounded px-2 py-1">
+                    </div>
+                </div>
+                
+                <div id="arrivalFields" class="hidden">
+                    <div class="mb-4">
+                        <label class="block mb-2">Arrival Date:</label>
+                        <input type="date" name="arrival_date" class="w-full border rounded px-2 py-1">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeModal()" 
+                            class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Approval Modal -->
+    <div id="approvalModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded shadow-lg">
+            <h2 class="text-xl font-bold mb-4">Review Purchase Request</h2>
+            <form id="approvalForm" method="POST">
+                <div class="mb-4">
+                    <label class="block mb-2">Notes:</label>
+                    <textarea name="notes" class="w-full border rounded px-2 py-1"></textarea>
+                </div>
+                
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeApprovalModal()" 
+                            class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                    <button type="submit" name="action" value="reject" 
+                            class="bg-red-500 text-white px-4 py-2 rounded">Reject</button>
+                    <button type="submit" name="action" value="approve" 
+                            class="bg-green-500 text-white px-4 py-2 rounded">Approve</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Notes Modal -->
+    <div id="adminModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded shadow-lg w-96">
+            <h2 class="text-xl font-bold mb-4">Add Notes and Images</h2>
+            <form id="adminForm" method="POST" enctype="multipart/form-data">
+                <div class="mb-4">
+                    <label class="block mb-2">Admin Notes:</label>
+                    <textarea name="admin_notes" class="w-full border rounded px-2 py-1 h-32"></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block mb-2">Upload Image:</label>
+                    <input type="file" name="image" accept="image/*" 
+                           class="w-full border rounded px-2 py-1">
+                </div>
+                
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeAdminModal()" 
+                            class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+                    <button type="submit" class="bg-purple-500 text-white px-4 py-2 rounded">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showUpdateModal(purchaseId) {
+            const modal = document.getElementById('updateModal');
+            const form = document.getElementById('updateForm');
+            form.action = `/purchase/${purchaseId}/update_status`;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('updateModal').classList.add('hidden');
+        }
+
+        function handleStatusChange(select) {
+            const shippingFields = document.getElementById('shippingFields');
+            const arrivalFields = document.getElementById('arrivalFields');
+            
+            if (select.value === 'Shipped') {
+                shippingFields.classList.remove('hidden');
+                arrivalFields.classList.add('hidden');
+            } else if (select.value === 'Arrived') {
+                shippingFields.classList.add('hidden');
+                arrivalFields.classList.remove('hidden');
+            } else {
+                shippingFields.classList.add('hidden');
+                arrivalFields.classList.add('hidden');
+            }
+        }
+
+        function showApprovalModal(purchaseId) {
+            const modal = document.getElementById('approvalModal');
+            const form = document.getElementById('approvalForm');
+            form.action = `/purchase/${purchaseId}/approve`;
+            modal.classList.remove('hidden');
+        }
+
+        function closeApprovalModal() {
+            document.getElementById('approvalModal').classList.add('hidden');
+        }
+
+        function showAdminModal(purchaseId) {
+            const modal = document.getElementById('adminModal');
+            const form = document.getElementById('adminForm');
+            form.action = `/purchase/${purchaseId}/update_admin`;
+            modal.classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
