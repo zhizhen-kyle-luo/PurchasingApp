@@ -1,287 +1,732 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>All Purchases</title>
+    <title>Purchases - MY25</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <style>
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 250px;
+            background-color: #1e1e1e;
+            padding-top: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: #9ca3af;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            font-size: 1.1rem;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sidebar-header img {
+            width: 120px;
+            height: auto;
+            object-fit: contain;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header h1 {
+            color: white;
+            font-size: 1.75rem;
+            font-weight: bold;
+            letter-spacing: -0.5px;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 2rem auto;
+            padding: 2rem;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 10px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 1.5rem;
+            top: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #666;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #f3f4f6;
+            transition: all 0.2s;
+        }
+
+        .close-modal:hover {
+            background-color: #e5e7eb;
+            color: #000;
+        }
+
+        /* Prevent body scrolling when modal is open */
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        /* Update user section styling */
+        .user-section {
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .user-section h2 {
+            color: white;
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .change-name-btn {
+            color: #60a5fa;
+            font-size: 1rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .change-name-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
-    {% macro render_purchase_table(purchases, user) %}
-    <table class="w-full">
-        <thead>
-            <tr>
-                <th class="px-4 py-2">Date</th>
-                <th class="px-4 py-2">Urgency</th>
-                <th class="px-4 py-2">Requester</th>
-                <th class="px-4 py-2">Item</th>
-                <th class="px-4 py-2">Vendor</th>
-                <th class="px-4 py-2">Price</th>
-                <th class="px-4 py-2">Approval Status</th>
-                <th class="px-4 py-2">Shipping Status</th>
-                <th class="px-4 py-2">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for purchase in purchases %}
-            <tr class="{% if purchase.urgency == 'urgent' %}bg-red-50{% endif %}">
-                <td class="border px-4 py-2">{{ purchase.purchase_date.strftime('%Y-%m-%d') }}</td>
-                <td class="border px-4 py-2">{{ purchase.urgency }}</td>
-                <td class="border px-4 py-2">{{ purchase.requester_name }}</td>
-                <td class="border px-4 py-2">
-                    {{ purchase.item_name }}
-                    {% if purchase.item_link %}
-                    <br><span class="text-sm text-gray-600">({{ purchase.item_link }})</span>
-                    {% endif %}
-                </td>
-                <td class="border px-4 py-2">{{ purchase.vendor_name }}</td>
-                <td class="border px-4 py-2">${{ "%.2f"|format(purchase.price) }}</td>
-                <td class="border px-4 py-2">
-                    <span class="px-2 py-1 rounded 
-                        {% if purchase.approval_status == 'Pending Approval' %}bg-yellow-200 text-yellow-800
-                        {% elif purchase.approval_status == 'Approved' %}bg-green-200 text-green-800
-                        {% else %}bg-red-200 text-red-800{% endif %}">
-                        {{ purchase.approval_status }}
-                    </span>
-                </td>
-                <td class="border px-4 py-2">
-                    <span class="px-2 py-1 rounded 
-                        {% if purchase.status == 'Not Yet Shipped' %}bg-red-200 text-red-800
-                        {% elif purchase.status == 'Shipped' %}bg-yellow-200 text-yellow-800
-                        {% else %}bg-green-200 text-green-800{% endif %}">
-                        {{ purchase.status }}
-                    </span>
-                </td>
-                <td class="border px-4 py-2">
-                    <div class="flex gap-2">
-                        {% if (is_executive or is_business) and purchase.approval_status == 'Pending Approval' %}
-                            <button onclick="showApprovalModal('{{ purchase.id }}')" 
-                                    class="bg-green-500 text-white px-2 py-1 rounded">
-                                Review
-                            </button>
-                        {% endif %}
-                        
-                        {% if is_business or is_executive or purchase.user_id == user.id %}
-                            <button onclick="showUpdateModal('{{ purchase.id }}')" 
-                                    class="bg-blue-500 text-white px-2 py-1 rounded">
-                                Update Status
-                            </button>
-                        {% endif %}
-
-                        {% if is_business or is_executive %}
-                            <button onclick="showAdminModal('{{ purchase.id }}')" 
-                                    class="bg-purple-500 text-white px-2 py-1 rounded">
-                                Add Notes/Images
-                            </button>
-                        {% endif %}
-                    </div>
-
-                    {% if purchase.admin_notes or purchase.image_filename %}
-                        <div class="mt-2 text-sm">
-                            {% if purchase.admin_notes %}
-                                <div class="text-gray-600">Notes: {{ purchase.admin_notes }}</div>
-                            {% endif %}
-                            {% if purchase.image_filename %}
-                                <a href="{{ url_for('static', filename='uploads/' + purchase.image_filename) }}" 
-                                   target="_blank" class="text-blue-500 hover:underline">
-                                    View Image
-                                </a>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endmacro %}
-
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center gap-4">
-                <h1 class="text-3xl font-bold">Hi {{ current_user.email.split('@')[0].capitalize() }}!</h1>
-            </div>
-            <div class="flex items-center gap-4">
-                {% if is_requester or is_business or is_executive %}
-                <a href="{{ url_for('new_purchase') }}" class="bg-blue-500 text-white px-4 py-2 rounded">
-                    New Purchase Request
-                </a>
-                {% endif %}
-                <a href="{{ url_for('logout') }}" class="text-red-500 hover:underline">Logout</a>
-            </div>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="{{ url_for('static', filename='images/Motorsports Logo.png') }}" 
+                 alt="MIT Motorsports"
+                 class="w-16 h-16 mb-2">
+            <h1>MIT Motorsports</h1>
         </div>
 
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                        {{ message }}
-                    </div>
+        <div class="user-section">
+            <h2>{{ current_user.role.capitalize() }}</h2>
+            <button onclick="showNameChangeModal()" class="change-name-btn">
+                Change Name
+            </button>
+        </div>
+
+        <nav class="flex-1 flex flex-col">
+            <a href="#" class="nav-item active" onclick="showMyCurrentOrders()">My Current Orders</a>
+            <a href="#" class="nav-item" onclick="showAllCurrentOrders()">All Current Orders</a>
+            <a href="#" class="nav-item" onclick="showAllPastOrders()">All Past Orders</a>
+            <a href="{{ url_for('new_purchase') }}" class="nav-item">New Order</a>
+            <a href="{{ url_for('logout') }}" class="nav-item text-red-400 mt-auto">Sign Out</a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1 class="text-2xl font-bold mb-6" id="sectionTitle">My Current Orders</h1>
+
+        <!-- My Current Orders Section -->
+        <div id="myCurrentOrders" class="content-section">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for order in current_orders %}
+                    {% include 'order_card.html' %}
+                {% else %}
+                    <p class="text-gray-500 text-center col-span-3">No current orders</p>
                 {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
-        <!-- My Orders Section -->
-        <div class="bg-white shadow-md rounded px-8 py-6 mt-4">
-            <h2 class="text-2xl font-bold mb-4">My Orders</h2>
-            {% if not my_purchases %}
-                <p class="text-center text-gray-600">You haven't made any orders yet!</p>
-            {% else %}
-                <div class="overflow-x-auto">
-                    {{ render_purchase_table(my_purchases, current_user) }}
-                </div>
-            {% endif %}
+            </div>
         </div>
 
-        <!-- All Orders Section -->
-        <div class="bg-white shadow-md rounded px-8 py-6 mt-8">
-            <h2 class="text-2xl font-bold mb-4">All Orders</h2>
-            {% if not all_purchases %}
-                <p class="text-center text-gray-600">No orders at the moment!</p>
-            {% else %}
-                <div class="overflow-x-auto">
-                    {{ render_purchase_table(all_purchases, current_user) }}
-                </div>
-            {% endif %}
+        <!-- All Current Orders Section -->
+        <div id="allCurrentOrders" class="content-section hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for order in all_current_orders %}
+                    {% include 'order_card.html' %}
+                {% else %}
+                    <p class="text-gray-500 text-center col-span-3">No orders</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Previous Orders Section -->
+        <div id="previousOrders" class="content-section hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for order in previous_orders %}
+                    {% include 'order_card.html' %}
+                {% else %}
+                    <p class="text-gray-500 text-center col-span-3">No previous orders</p>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
-    <!-- Status Update Modal -->
-    <div id="updateModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white p-8 rounded shadow-lg">
-            <h2 class="text-xl font-bold mb-4">Update Purchase Status</h2>
-            <form id="updateForm" method="POST">
-                <div class="mb-4">
-                    <label class="block mb-2">Status:</label>
-                    <select name="status" class="w-full border rounded px-2 py-1" onchange="handleStatusChange(this)">
-                        <option value="Not Yet Shipped">Not Yet Shipped</option>
-                        <option value="Shipped">Shipped</option>
-                        <option value="Arrived">Arrived</option>
-                    </select>
-                </div>
-                
-                <div id="shippingFields" class="hidden">
-                    <div class="mb-4">
-                        <label class="block mb-2">Tracking Number:</label>
-                        <input type="text" name="tracking_number" class="w-full border rounded px-2 py-1">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block mb-2">Shipping Confirmation Email:</label>
-                        <input type="text" name="shipping_confirmation_email" class="w-full border rounded px-2 py-1">
-                    </div>
-                </div>
-                
-                <div id="arrivalFields" class="hidden">
-                    <div class="mb-4">
-                        <label class="block mb-2">Arrival Date:</label>
-                        <input type="date" name="arrival_date" class="w-full border rounded px-2 py-1">
-                    </div>
-                </div>
-                
+    <!-- Name Change Modal -->
+    <div id="nameChangeModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-96">
+            <h2 class="text-xl font-bold mb-4">Change Name</h2>
+            <form onsubmit="updateName(event)">
+                <input type="text" id="newName" 
+                       class="w-full p-2 border rounded mb-4" 
+                       placeholder="Enter new name">
                 <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closeModal()" 
-                            class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Approval Modal -->
-    <div id="approvalModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white p-8 rounded shadow-lg">
-            <h2 class="text-xl font-bold mb-4">Review Purchase Request</h2>
-            <form id="approvalForm" method="POST">
-                <div class="mb-4">
-                    <label class="block mb-2">Notes:</label>
-                    <textarea name="notes" class="w-full border rounded px-2 py-1"></textarea>
-                </div>
-                
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closeApprovalModal()" 
-                            class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-                    <button type="submit" name="action" value="reject" 
-                            class="bg-red-500 text-white px-4 py-2 rounded">Reject</button>
-                    <button type="submit" name="action" value="approve" 
-                            class="bg-green-500 text-white px-4 py-2 rounded">Approve</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Admin Notes Modal -->
-    <div id="adminModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white p-8 rounded shadow-lg w-96">
-            <h2 class="text-xl font-bold mb-4">Add Notes and Images</h2>
-            <form id="adminForm" method="POST" enctype="multipart/form-data">
-                <div class="mb-4">
-                    <label class="block mb-2">Admin Notes:</label>
-                    <textarea name="admin_notes" class="w-full border rounded px-2 py-1 h-32"></textarea>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block mb-2">Upload Image:</label>
-                    <input type="file" name="image" accept="image/*" 
-                           class="w-full border rounded px-2 py-1">
-                </div>
-                
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closeAdminModal()" 
-                            class="bg-gray-300 px-4 py-2 rounded">Cancel</button>
-                    <button type="submit" class="bg-purple-500 text-white px-4 py-2 rounded">
-                        Save
+                    <button type="button" 
+                            onclick="closeNameChangeModal()" 
+                            class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        Update
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Order Details Modal -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div id="orderDetails">
+                <!-- Order details will be populated here -->
+
+                <!-- Business Actions -->
+                {% if current_user.is_business() %}
+                <div class="bg-gray-50 p-6 rounded-lg mt-6">
+                    <h3 class="text-lg font-semibold mb-4">Order Status Actions</h3>
+                    <div class="flex gap-3">
+                        ${data.approval_status === 'Fully Approved' && data.status === 'Not Yet Purchased' ? `
+                            <button onclick="markAsShipped(${orderId})"
+                                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                Mark as Shipped
+                            </button>
+                        ` : ''}
+
+                        ${data.status === 'Shipped' ? `
+                            <button onclick="markAsArrived(${orderId})"
+                                    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                                Mark as Arrived
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Status Badges -->
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <span class="px-2 py-1 rounded-full text-sm 
+                        ${data.urgency === 'Both' ? 'bg-red-100 text-red-800 font-bold' :
+                        data.urgency === 'Urgent' ? 'bg-orange-100 text-orange-800' :
+                        data.urgency === 'Special/Large' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'}">
+                        ${data.urgency}
+                    </span>
+                    <span class="px-2 py-1 rounded-full text-sm 
+                        ${data.approval_status === 'Approved' ? 'bg-green-100 text-green-800' :
+                        data.approval_status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'}">
+                        ${data.approval_status}
+                    </span>
+                    ${data.status !== 'Not Yet Shipped' ? `
+                        <span class="px-2 py-1 rounded-full text-sm 
+                            ${data.status === 'Arrived' ? 'bg-blue-100 text-blue-800' :
+                            'bg-purple-100 text-purple-800'}">
+                            ${data.status}
+                        </span>
+                    ` : ''}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-6 border-t">
+                    <!-- Business Actions -->
+                    {% if current_user.is_business() %}
+                        <div class="flex gap-2 mb-4">
+                            ${data.approval_status === 'Fully Approved' && data.status !== 'Shipped' ? `
+                                <button onclick="markAsShipped(${orderId})"
+                                        class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
+                                    Mark as Shipped
+                                </button>
+                            ` : ''}
+
+                            ${data.status === 'Shipped' ? `
+                                <form id="arrivalForm" onsubmit="markAsArrived(event, ${orderId})" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Upload Arrival Photo
+                                        </label>
+                                        <input type="file" 
+                                               id="arrivalPhoto" 
+                                               name="photo" 
+                                               accept="image/*" 
+                                               required
+                                               class="block w-full text-sm text-gray-500
+                                                      file:mr-4 file:py-2 file:px-4
+                                                      file:rounded-full file:border-0
+                                                      file:text-sm file:font-semibold
+                                                      file:bg-blue-50 file:text-blue-700
+                                                      hover:file:bg-blue-100">
+                                    </div>
+                                    <button type="submit"
+                                            class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">
+                                        Mark as Arrived
+                                    </button>
+                                </form>
+                            ` : ''}
+                        </div>
+                    {% endif %}
+
+                    <!-- Delete Button - Always show for business users or order owners -->
+                    ${!data.is_deleted && (data.user_id === {{ current_user.id }} || {{ current_user.is_business()|tojson }}) ? `
+                        <button onclick="deleteOrder(${orderId})"
+                                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                            Delete Order
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function showUpdateModal(purchaseId) {
-            const modal = document.getElementById('updateModal');
-            const form = document.getElementById('updateForm');
-            form.action = `/purchase/${purchaseId}/update_status`;
-            modal.classList.remove('hidden');
+        let currentOrderId = null;
+
+        function showMyCurrentOrders() {
+            document.getElementById('sectionTitle').textContent = 'My Current Orders';
+            document.querySelectorAll('.content-section').forEach(section => section.classList.add('hidden'));
+            document.getElementById('myCurrentOrders').classList.remove('hidden');
+            updateActiveNavItem('My Current Orders');
+        }
+
+        function showAllCurrentOrders() {
+            document.getElementById('sectionTitle').textContent = 'All Current Orders';
+            document.querySelectorAll('.content-section').forEach(section => section.classList.add('hidden'));
+            document.getElementById('allCurrentOrders').classList.remove('hidden');
+            updateActiveNavItem('All Current Orders');
+        }
+
+        function showAllPastOrders() {
+            document.getElementById('sectionTitle').textContent = 'Previous Orders';
+            document.querySelectorAll('.content-section').forEach(section => section.classList.add('hidden'));
+            document.getElementById('previousOrders').classList.remove('hidden');
+            updateActiveNavItem('All Past Orders');
+        }
+
+        function updateActiveNavItem(activeText) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.textContent.trim() === activeText) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // Show My Current Orders by default
+        showMyCurrentOrders();
+
+        function showNameChangeModal() {
+            document.getElementById('nameChangeModal').classList.remove('hidden');
+        }
+
+        function closeNameChangeModal() {
+            document.getElementById('nameChangeModal').classList.add('hidden');
+        }
+
+        function updateName(event) {
+            event.preventDefault();
+            const newName = document.getElementById('newName').value;
+            
+            fetch('/update_name', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `new_name=${encodeURIComponent(newName)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating name: ' + data.error);
+                }
+            });
+        }
+
+        function showOrderDetails(orderId) {
+            fetch(`/order/${orderId}/details`)
+                .then(response => response.json())
+                .then(data => {
+                    const detailsContainer = document.getElementById('orderDetails');
+                    detailsContainer.innerHTML = `
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-2xl font-bold">Order Details</h2>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="bg-gray-50 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold mb-4">Vendor Information</h3>
+                                <div class="space-y-2">
+                                    <p><span class="font-medium">Name:</span> ${data.vendor_name}</p>
+                                    <p><span class="font-medium">Link:</span> <a href="${data.item_link}" class="text-blue-500 hover:underline" target="_blank">${data.item_link || 'No link provided'}</a></p>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold mb-4">Order Details</h3>
+                                <div class="space-y-2">
+                                    <p><span class="font-medium">Item Name:</span> ${data.item_name}</p>
+                                    <p><span class="font-medium">Quantity:</span> ${data.quantity}</p>
+                                    <p><span class="font-medium">Price:</span> $${data.price}</p>
+                                    <p><span class="font-medium">Shipping Cost:</span> $${data.shipping_cost}</p>
+                                    <p><span class="font-medium">Total:</span> $${(data.price + data.shipping_cost).toFixed(2)}</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold mb-4">Team Information</h3>
+                                <div class="space-y-2">
+                                    <p><span class="font-medium">Subteam:</span> ${data.subteam}</p>
+                                    <p><span class="font-medium">Sub-project:</span> ${data.subproject || 'Not specified'}</p>
+                                    <p><span class="font-medium">Requester:</span> ${data.requester_name}</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold mb-4">Purpose & Notes</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <p class="font-medium mb-2">Purpose:</p>
+                                        <p>${data.purpose}</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium mb-2">Additional Notes:</p>
+                                        <p>${data.notes || 'No additional notes'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons Section -->
+                            <div class="pt-6 border-t">
+                                <!-- Sublead Approval Buttons -->
+                                {% if current_user.is_sublead() %}
+                                    ${data.approval_status === 'Pending Sublead Approval' ? `
+                                        <div class="flex gap-2 mb-4">
+                                            <button onclick="approveOrder(${orderId}, 'approve')"
+                                                    class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">
+                                                Approve
+                                            </button>
+                                            <button onclick="approveOrder(${orderId}, 'reject')"
+                                                    class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">
+                                                Reject
+                                            </button>
+                                        </div>
+                                    ` : ''}
+                                {% endif %}
+
+                                <!-- Executive Approval Buttons -->
+                                {% if current_user.is_executive() %}
+                                    ${data.approval_status === 'Pending Executive Approval' ? `
+                                        <div class="flex gap-2 mb-4">
+                                            <button onclick="approveOrder(${orderId}, 'approve')"
+                                                    class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">
+                                                Approve
+                                            </button>
+                                            <button onclick="approveOrder(${orderId}, 'reject')"
+                                                    class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">
+                                                Reject
+                                            </button>
+                                        </div>
+                                    ` : ''}
+                                {% endif %}
+
+                                <!-- Business Actions -->
+                                {% if current_user.is_business() %}
+                                <div class="pt-6 border-t">
+                                    <div class="flex gap-2">
+                                        ${data.approval_status === 'Fully Approved' && data.status !== 'Shipped' ? `
+                                            <button onclick="markAsShipped(${orderId})"
+                                                    class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
+                                                Mark as Shipped
+                                            </button>
+                                        ` : ''}
+
+                                        ${data.status === 'Shipped' ? `
+                                            <form id="arrivalForm" onsubmit="markAsArrived(event, ${orderId})" class="space-y-4">
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                                        Upload Arrival Photo
+                                                    </label>
+                                                    <input type="file" 
+                                                           id="arrivalPhoto" 
+                                                           name="photo" 
+                                                           accept="image/*" 
+                                                           required
+                                                           class="block w-full text-sm text-gray-500
+                                                                  file:mr-4 file:py-2 file:px-4
+                                                                  file:rounded-full file:border-0
+                                                                  file:text-sm file:font-semibold
+                                                                  file:bg-blue-50 file:text-blue-700
+                                                                  hover:file:bg-blue-100">
+                                                </div>
+                                                <button type="submit"
+                                                        class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">
+                                                    Mark as Arrived
+                                                </button>
+                                            </form>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Show arrival photo if it exists -->
+                                ${data.arrival_photo ? `
+                                    <div class="mt-6 pt-6 border-t">
+                                        <h3 class="text-lg font-semibold mb-4">Arrival Photo</h3>
+                                        <img src="/static/uploads/${data.arrival_photo}" 
+                                             alt="Arrival Photo" 
+                                             class="max-w-full h-auto rounded-lg shadow-lg">
+                                        <p class="text-sm text-gray-500 mt-2">
+                                            Arrived on: ${new Date(data.arrived_at).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                ` : ''}
+
+                                <!-- Delete Button - Show for owner of the order -->
+                                ${data.user_id === {{ current_user.id }} && !data.is_deleted ? `
+                                    <button onclick="deleteOrder(${orderId})"
+                                            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                                        Delete Order
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('orderModal').style.display = 'block';
+                });
         }
 
         function closeModal() {
-            document.getElementById('updateModal').classList.add('hidden');
+            document.getElementById('orderModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
         }
 
-        function handleStatusChange(select) {
-            const shippingFields = document.getElementById('shippingFields');
-            const arrivalFields = document.getElementById('arrivalFields');
-            
-            if (select.value === 'Shipped') {
-                shippingFields.classList.remove('hidden');
-                arrivalFields.classList.add('hidden');
-            } else if (select.value === 'Arrived') {
-                shippingFields.classList.add('hidden');
-                arrivalFields.classList.remove('hidden');
-            } else {
-                shippingFields.classList.add('hidden');
-                arrivalFields.classList.add('hidden');
+        // Add event listener for clicking outside modal
+        window.onclick = function(event) {
+            const modal = document.getElementById('orderModal');
+            if (event.target == modal) {
+                closeModal();
             }
         }
 
-        function showApprovalModal(purchaseId) {
-            const modal = document.getElementById('approvalModal');
-            const form = document.getElementById('approvalForm');
-            form.action = `/purchase/${purchaseId}/approve`;
-            modal.classList.remove('hidden');
+        // Add escape key listener
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Add these functions for the new buttons
+        function markAsPurchased(orderId) {
+            updateOrderStatus(orderId, 'purchased');
         }
 
-        function closeApprovalModal() {
-            document.getElementById('approvalModal').classList.add('hidden');
+        function markAsShipped(orderId) {
+            updateOrderStatus(orderId, 'shipped');
         }
 
-        function showAdminModal(purchaseId) {
-            const modal = document.getElementById('adminModal');
-            const form = document.getElementById('adminForm');
-            form.action = `/purchase/${purchaseId}/update_admin`;
-            modal.classList.remove('hidden');
+        function markAsArrived(event, orderId) {
+            event.preventDefault();
+            
+            const formData = new FormData();
+            const photoFile = document.getElementById('arrivalPhoto').files[0];
+            formData.append('photo', photoFile);
+            formData.append('status', 'arrived');
+
+            fetch(`/purchase/${orderId}/update_status`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    closeModal();
+                    location.reload();
+                } else {
+                    alert('Error updating order status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating order status');
+            });
         }
 
-        function closeAdminModal() {
-            document.getElementById('adminModal').classList.add('hidden');
+        function updateOrderStatus(orderId, status) {
+            fetch(`/purchase/${orderId}/update_status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `status=${status}`
+            })
+            .then(response => {
+                if (response.ok) {
+                    closeModal();
+                    location.reload();
+                } else {
+                    alert('Error updating order status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating order status');
+            });
+        }
+
+        function editOrder(orderId) {
+            window.location.href = `/purchase/${orderId}/edit`;
+        }
+
+        function deleteOrder(orderId) {
+            if (confirm('Are you sure you want to delete this order?')) {
+                fetch(`/purchase/${orderId}/delete`, {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        closeModal();
+                        location.reload();
+                    } else {
+                        alert('Error deleting order');
+                    }
+                });
+            }
+        }
+
+        function restoreOrder(orderId) {
+            fetch(`/purchase/${orderId}/restore`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    closeModal();
+                    location.reload();
+                } else {
+                    alert('Error restoring order');
+                }
+            });
+        }
+
+        function approveOrder(orderId, action) {
+            fetch(`/purchase/${orderId}/approve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ action: action })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    closeModal();
+                    location.reload();
+                } else {
+                    alert('Error updating order status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating order status');
+            });
+        }
+
+        function markAsShipped(orderId) {
+            fetch(`/purchase/${orderId}/update_status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'status=shipped'
+            })
+            .then(response => {
+                if (response.ok) {
+                    closeModal();
+                    location.reload();
+                } else {
+                    alert('Error updating order status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating order status');
+            });
+        }
+
+        function markAsArrived(event, orderId) {
+            event.preventDefault();
+            
+            const formData = new FormData();
+            const photoFile = document.getElementById('arrivalPhoto').files[0];
+            formData.append('photo', photoFile);
+            formData.append('status', 'arrived');
+
+            fetch(`/purchase/${orderId}/update_status`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    closeModal();
+                    location.reload();
+                } else {
+                    alert('Error updating order status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating order status');
+            });
         }
     </script>
 </body>

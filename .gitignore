@@ -20,12 +20,14 @@ var/
 .installed.cfg
 *.egg
 
-# Flask
-instance/
-.webassets-cache
-
 # Database
+instance/
 *.db
+*.sqlite
+
+# Migrations
+migrations/
+!migrations/__init__.py
 
 # Uploads
 static/uploads/*
