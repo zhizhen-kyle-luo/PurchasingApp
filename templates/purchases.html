@@ -148,8 +148,9 @@
         </div>
 
         <div class="user-section">
-            <h2>{{ current_user.role.capitalize() }}</h2>
-            <button onclick="showNameChangeModal()" class="change-name-btn">
+            <h2 class="text-white text-lg mb-2">{{ current_user.role.capitalize() }}</h2>
+            <button onclick="showNameChangeModal()" 
+                    class="text-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
                 Change Name
             </button>
         </div>
@@ -202,13 +203,15 @@
     </div>
 
     <!-- Name Change Modal -->
-    <div id="nameChangeModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 w-96">
+    <div id="nameChangeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="bg-white rounded-lg p-6 w-96 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <h2 class="text-xl font-bold mb-4">Change Name</h2>
             <form onsubmit="updateName(event)">
-                <input type="text" id="newName" 
+                <input type="text" 
+                       id="newName" 
                        class="w-full p-2 border rounded mb-4" 
-                       placeholder="Enter new name">
+                       placeholder="Enter new name"
+                       required>
                 <div class="flex justify-end gap-2">
                     <button type="button" 
                             onclick="closeNameChangeModal()" 
@@ -228,102 +231,9 @@
     <div id="orderModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 class="text-2xl font-bold text-left mb-6">Order Details</h2>
             <div id="orderDetails">
                 <!-- Order details will be populated here -->
-
-                <!-- Business Actions -->
-                {% if current_user.is_business() %}
-                <div class="bg-gray-50 p-6 rounded-lg mt-6">
-                    <h3 class="text-lg font-semibold mb-4">Order Status Actions</h3>
-                    <div class="flex gap-3">
-                        ${data.approval_status === 'Fully Approved' && data.status === 'Not Yet Purchased' ? `
-                            <button onclick="markAsShipped(${orderId})"
-                                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                                Mark as Shipped
-                            </button>
-                        ` : ''}
-
-                        ${data.status === 'Shipped' ? `
-                            <button onclick="markAsArrived(${orderId})"
-                                    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                                Mark as Arrived
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Status Badges -->
-                <div class="flex flex-wrap gap-2 mt-4">
-                    <span class="px-2 py-1 rounded-full text-sm 
-                        ${data.urgency === 'Both' ? 'bg-red-100 text-red-800 font-bold' :
-                        data.urgency === 'Urgent' ? 'bg-orange-100 text-orange-800' :
-                        data.urgency === 'Special/Large' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'}">
-                        ${data.urgency}
-                    </span>
-                    <span class="px-2 py-1 rounded-full text-sm 
-                        ${data.approval_status === 'Approved' ? 'bg-green-100 text-green-800' :
-                        data.approval_status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'}">
-                        ${data.approval_status}
-                    </span>
-                    ${data.status !== 'Not Yet Shipped' ? `
-                        <span class="px-2 py-1 rounded-full text-sm 
-                            ${data.status === 'Arrived' ? 'bg-blue-100 text-blue-800' :
-                            'bg-purple-100 text-purple-800'}">
-                            ${data.status}
-                        </span>
-                    ` : ''}
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="pt-6 border-t">
-                    <!-- Business Actions -->
-                    {% if current_user.is_business() %}
-                        <div class="flex gap-2 mb-4">
-                            ${data.approval_status === 'Fully Approved' && data.status !== 'Shipped' ? `
-                                <button onclick="markAsShipped(${orderId})"
-                                        class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
-                                    Mark as Shipped
-                                </button>
-                            ` : ''}
-
-                            ${data.status === 'Shipped' ? `
-                                <form id="arrivalForm" onsubmit="markAsArrived(event, ${orderId})" class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                                            Upload Arrival Photo
-                                        </label>
-                                        <input type="file" 
-                                               id="arrivalPhoto" 
-                                               name="photo" 
-                                               accept="image/*" 
-                                               required
-                                               class="block w-full text-sm text-gray-500
-                                                      file:mr-4 file:py-2 file:px-4
-                                                      file:rounded-full file:border-0
-                                                      file:text-sm file:font-semibold
-                                                      file:bg-blue-50 file:text-blue-700
-                                                      hover:file:bg-blue-100">
-                                    </div>
-                                    <button type="submit"
-                                            class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">
-                                        Mark as Arrived
-                                    </button>
-                                </form>
-                            ` : ''}
-                        </div>
-                    {% endif %}
-
-                    <!-- Delete Button - Always show for business users or order owners -->
-                    ${!data.is_deleted && (data.user_id === {{ current_user.id }} || {{ current_user.is_business()|tojson }}) ? `
-                        <button onclick="deleteOrder(${orderId})"
-                                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                            Delete Order
-                        </button>
-                    ` : ''}
-                </div>
             </div>
         </div>
     </div>
@@ -380,170 +290,151 @@
             fetch('/update_name', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                 },
-                body: `new_name=${encodeURIComponent(newName)}`
+                body: JSON.stringify({ name: newName })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     location.reload();
                 } else {
-                    alert('Error updating name: ' + data.error);
+                    alert('Error updating name');
                 }
             });
         }
 
         function showOrderDetails(orderId) {
-            fetch(`/order/${orderId}/details`)
+            fetch(`/purchase/${orderId}/details`)
                 .then(response => response.json())
                 .then(data => {
                     const detailsContainer = document.getElementById('orderDetails');
                     detailsContainer.innerHTML = `
-                        <div class="flex justify-between items-center mb-8">
-                            <h2 class="text-2xl font-bold">Order Details</h2>
+                        <!-- Order Information Box -->
+                        <div class="bg-gray-50 rounded-lg p-6 mb-6 shadow-sm">
+                            <h3 class="text-lg font-semibold mb-4">Order Information</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="mb-2"><strong>Item:</strong> ${data.item_name}</p>
+                                    <p class="mb-2"><strong>Vendor:</strong> ${data.vendor_name}</p>
+                                    <p class="mb-2"><strong>Link:</strong> 
+                                        ${data.item_link ? `
+                                            <a href="${data.item_link.startsWith('http') ? data.item_link : 'https://' + data.item_link}" 
+                                               target="_blank" 
+                                               class="text-blue-500 hover:underline">
+                                                ${data.item_link}
+                                            </a>
+                                        ` : 'No link provided'}
+                                    </p>
+                                    <p class="mb-2"><strong>Price:</strong> $${data.price}</p>
+                                </div>
+                                <div>
+                                    <p class="mb-2"><strong>Shipping:</strong> $${data.shipping_cost}</p>
+                                    <p class="mb-2"><strong>Total:</strong> $${(data.price + data.shipping_cost).toFixed(2)}</p>
+                                    <p class="mb-2"><strong>Quantity:</strong> ${data.quantity}</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="space-y-6">
-                            <div class="bg-gray-50 p-6 rounded-lg">
-                                <h3 class="text-lg font-semibold mb-4">Vendor Information</h3>
-                                <div class="space-y-2">
-                                    <p><span class="font-medium">Name:</span> ${data.vendor_name}</p>
-                                    <p><span class="font-medium">Link:</span> <a href="${data.item_link}" class="text-blue-500 hover:underline" target="_blank">${data.item_link || 'No link provided'}</a></p>
+
+                        <!-- Team Information Box -->
+                        <div class="bg-gray-50 rounded-lg p-6 mb-6 shadow-sm">
+                            <h3 class="text-lg font-semibold mb-4">Team Information</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="mb-2"><strong>Subteam:</strong> ${data.subteam}</p>
+                                    <p class="mb-2"><strong>Sub-project:</strong> ${data.subproject}</p>
+                                    <p class="mb-2"><strong>Requester:</strong> ${data.requester_name}</p>
+                                    <p class="mb-2"><strong>Purchase Date:</strong> ${data.purchase_date}</p>
+                                </div>
+                                <div>
+                                    <p class="mb-2"><strong>Status:</strong> ${data.status}</p>
+                                    <p class="mb-2"><strong>Approval Status:</strong> ${data.approval_status}</p>
+                                    <p class="mb-2"><strong>Urgency:</strong> ${data.urgency}</p>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="bg-gray-50 p-6 rounded-lg">
-                                <h3 class="text-lg font-semibold mb-4">Order Details</h3>
-                                <div class="space-y-2">
-                                    <p><span class="font-medium">Item Name:</span> ${data.item_name}</p>
-                                    <p><span class="font-medium">Quantity:</span> ${data.quantity}</p>
-                                    <p><span class="font-medium">Price:</span> $${data.price}</p>
-                                    <p><span class="font-medium">Shipping Cost:</span> $${data.shipping_cost}</p>
-                                    <p><span class="font-medium">Total:</span> $${(data.price + data.shipping_cost).toFixed(2)}</p>
-                                </div>
-                            </div>
+                        <!-- Purpose & Notes Box -->
+                        <div class="bg-gray-50 rounded-lg p-6 mb-6 shadow-sm">
+                            <h3 class="text-lg font-semibold mb-4">Purpose & Notes</h3>
+                            <p class="mb-2"><strong>Purpose:</strong> ${data.purpose}</p>
+                            ${data.notes ? `<p class="mb-2"><strong>Additional Notes:</strong> ${data.notes}</p>` : ''}
+                        </div>
 
-                            <div class="bg-gray-50 p-6 rounded-lg">
-                                <h3 class="text-lg font-semibold mb-4">Team Information</h3>
-                                <div class="space-y-2">
-                                    <p><span class="font-medium">Subteam:</span> ${data.subteam}</p>
-                                    <p><span class="font-medium">Sub-project:</span> ${data.subproject || 'Not specified'}</p>
-                                    <p><span class="font-medium">Requester:</span> ${data.requester_name}</p>
-                                </div>
-                            </div>
+                        <!-- Action Buttons Section -->
+                        <div class="bg-gray-50 rounded-lg p-6 mb-6 shadow-sm">
+                            <p class="text-gray-600 mb-4 italic">Note: After clicking any button, please wait a few moments for the action to complete. Do not click multiple times.</p>
+                            
+                            <div class="flex flex-col gap-4 items-start">  <!-- Changed to flex-col and items-start for left alignment -->
+                                <!-- Delete/Restore Button -->
+                                ${data.status !== 'Arrived' ? `
+                                    ${!data.is_deleted ? `
+                                        <button onclick="deleteOrder(${orderId})"
+                                                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors">
+                                            Delete Order
+                                        </button>
+                                    ` : `
+                                        <button onclick="restoreOrder(${orderId})"
+                                                class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
+                                            Restore Order
+                                        </button>
+                                    `}
+                                ` : `
+                                    <button onclick="restoreOrder(${orderId})"
+                                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
+                                        Restore Order
+                                    </button>
+                                `}
 
-                            <div class="bg-gray-50 p-6 rounded-lg">
-                                <h3 class="text-lg font-semibold mb-4">Purpose & Notes</h3>
-                                <div class="space-y-4">
-                                    <div>
-                                        <p class="font-medium mb-2">Purpose:</p>
-                                        <p>${data.purpose}</p>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium mb-2">Additional Notes:</p>
-                                        <p>${data.notes || 'No additional notes'}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Action Buttons Section -->
-                            <div class="pt-6 border-t">
-                                <!-- Sublead Approval Buttons -->
-                                {% if current_user.is_sublead() %}
-                                    ${data.approval_status === 'Pending Sublead Approval' ? `
-                                        <div class="flex gap-2 mb-4">
-                                            <button onclick="approveOrder(${orderId}, 'approve')"
-                                                    class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">
-                                                Approve
-                                            </button>
-                                            <button onclick="approveOrder(${orderId}, 'reject')"
-                                                    class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">
-                                                Reject
-                                            </button>
-                                        </div>
-                                    ` : ''}
-                                {% endif %}
-
-                                <!-- Executive Approval Buttons -->
-                                {% if current_user.is_executive() %}
-                                    ${data.approval_status === 'Pending Executive Approval' ? `
-                                        <div class="flex gap-2 mb-4">
-                                            <button onclick="approveOrder(${orderId}, 'approve')"
-                                                    class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">
-                                                Approve
-                                            </button>
-                                            <button onclick="approveOrder(${orderId}, 'reject')"
-                                                    class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">
-                                                Reject
-                                            </button>
-                                        </div>
-                                    ` : ''}
-                                {% endif %}
-
-                                <!-- Business Actions -->
-                                {% if current_user.is_business() %}
-                                <div class="pt-6 border-t">
-                                    <div class="flex gap-2">
-                                        ${data.approval_status === 'Fully Approved' && data.status !== 'Shipped' ? `
-                                            <button onclick="markAsShipped(${orderId})"
-                                                    class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
-                                                Mark as Shipped
-                                            </button>
-                                        ` : ''}
-
-                                        ${data.status === 'Shipped' ? `
-                                            <form id="arrivalForm" onsubmit="markAsArrived(event, ${orderId})" class="space-y-4">
-                                                <div>
-                                                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                                                        Upload Arrival Photo
-                                                    </label>
-                                                    <input type="file" 
-                                                           id="arrivalPhoto" 
-                                                           name="photo" 
-                                                           accept="image/*" 
-                                                           required
-                                                           class="block w-full text-sm text-gray-500
-                                                                  file:mr-4 file:py-2 file:px-4
-                                                                  file:rounded-full file:border-0
-                                                                  file:text-sm file:font-semibold
-                                                                  file:bg-blue-50 file:text-blue-700
-                                                                  hover:file:bg-blue-100">
-                                                </div>
-                                                <button type="submit"
-                                                        class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">
-                                                    Mark as Arrived
-                                                </button>
-                                            </form>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                                {% endif %}
-
-                                <!-- Show arrival photo if it exists -->
-                                ${data.arrival_photo ? `
-                                    <div class="mt-6 pt-6 border-t">
-                                        <h3 class="text-lg font-semibold mb-4">Arrival Photo</h3>
-                                        <img src="/static/uploads/${data.arrival_photo}" 
-                                             alt="Arrival Photo" 
-                                             class="max-w-full h-auto rounded-lg shadow-lg">
-                                        <p class="text-sm text-gray-500 mt-2">
-                                            Arrived on: ${new Date(data.arrived_at).toLocaleDateString()}
-                                        </p>
-                                    </div>
+                                <!-- Approve Button -->
+                                ${data.approval_status === 'Pending Sublead Approval' || data.approval_status === 'Pending Executive Approval' ? `
+                                    <button onclick="approveOrder(${orderId})"
+                                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
+                                        Approve Order
+                                    </button>
                                 ` : ''}
 
-                                <!-- Delete Button - Show for owner of the order -->
-                                ${data.user_id === {{ current_user.id }} && !data.is_deleted ? `
-                                    <button onclick="deleteOrder(${orderId})"
-                                            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                                        Delete Order
+                                <!-- Business Actions -->
+                                ${data.approval_status === 'Fully Approved' && data.status === 'Not Yet Purchased' ? `
+                                    <button onclick="markAsPurchased(${orderId})"
+                                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+                                        Mark as Purchased
                                     </button>
+                                ` : ''}
+
+                                ${data.status === 'Purchased' ? `
+                                    <button onclick="markAsShipped(${orderId})"
+                                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+                                        Mark as Shipped
+                                    </button>
+                                ` : ''}
+
+                                ${data.status === 'Shipped' ? `
+                                    <form onsubmit="markAsArrived(event, ${orderId})" class="flex flex-col gap-2">
+                                        <input type="file" id="arrivalPhoto" required accept="image/*"
+                                               class="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
+                                                      file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
+                                                      hover:file:bg-blue-100">
+                                        <button type="submit"
+                                                class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
+                                            Mark as Arrived
+                                        </button>
+                                    </form>
+                                ` : ''}
+
+                                <!-- Show arrival photo if exists -->
+                                ${data.arrival_photo ? `
+                                    <div class="mt-4">
+                                        <h4 class="font-semibold mb-2">Arrival Photo:</h4>
+                                        <img src="/static/uploads/${data.arrival_photo}" alt="Arrival Photo" class="max-w-full h-auto rounded">
+                                    </div>
                                 ` : ''}
                             </div>
                         </div>
                     `;
                     
                     document.getElementById('orderModal').style.display = 'block';
+                    document.body.classList.add('modal-open');
                 });
         }
 
@@ -569,7 +460,25 @@
 
         // Add these functions for the new buttons
         function markAsPurchased(orderId) {
-            updateOrderStatus(orderId, 'purchased');
+            fetch(`/purchase/${orderId}/update_status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'status=purchased'
+            })
+            .then(response => {
+                if (response.ok) {
+                    closeModal();
+                    location.reload();
+                } else {
+                    alert('Error updating order status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating order status');
+            });
         }
 
         function markAsShipped(orderId) {
@@ -658,13 +567,13 @@
             });
         }
 
-        function approveOrder(orderId, action) {
+        function approveOrder(orderId) {
             fetch(`/purchase/${orderId}/approve`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ action: action })
+                body: JSON.stringify({ action: 'approve' })
             })
             .then(response => response.json())
             .then(data => {
@@ -672,7 +581,7 @@
                     closeModal();
                     location.reload();
                 } else {
-                    alert('Error updating order status');
+                    alert(data.error || 'You do not have permission to approve this order');
                 }
             })
             .catch(error => {

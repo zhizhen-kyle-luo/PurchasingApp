@@ -12,7 +12,6 @@ from flask_mail import Mail, Message
 import secrets
 import logging
 from logging.handlers import RotatingFileHandler
-from flask_migrate import Migrate
 from sqlalchemy import case, or_, and_
 from flask_login import UserMixin
 
@@ -21,18 +20,22 @@ app.config['SECRET_KEY'] = 'your-secret-key'  # Change this in production
 
 # Database configuration
 if 'PYTHONANYWHERE_DOMAIN' in os.environ:
-    # PythonAnywhere environment
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/kyleluo/mysite/instance/purchases.db'
+    # PythonAnywhere environment - update to match your actual directory
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/kyleluo/instance/purchases.db'
+    BASE_URL = 'https://kyleluo.pythonanywhere.com'
+    UPLOAD_FOLDER = '/home/kyleluo/static/uploads'  # Update upload folder path
 else:
-    # Local environment - use absolute path
+    # Local environment paths remain the same
     basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "instance", "purchases.db")}'
+    BASE_URL = 'http://127.0.0.1:5000'
+    UPLOAD_FOLDER = 'static/uploads'
+
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 # Restore upload folder configuration
-UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -170,32 +173,39 @@ This is an automated message. Please do not reply to this email."""
 @login_required
 def approve_order(order_id):
     order = Purchase.query.get_or_404(order_id)
-    action = request.json.get('action')
     
-    if current_user.is_sublead():
-        if action == 'approve':
-            order.approval_status = 'Pending Executive Approval'
-            # Notify executive for their approval
-            send_exec_approval_notification(order)
-            # Notify requester of sublead approval
-            send_approval_status_notification(order, 'approved by sublead')
-        elif action == 'reject':
-            order.approval_status = 'Rejected by Sublead'
-            order.exec_approval_status = 'Cancelled'
-            send_approval_status_notification(order, 'rejected by sublead')
-    
-    elif current_user.is_executive():
-        if action == 'approve':
-            order.exec_approval_status = 'Approved'
-            order.approval_status = 'Fully Approved'
-            send_approval_status_notification(order, 'fully approved')
-        elif action == 'reject':
-            order.exec_approval_status = 'Rejected'
-            order.approval_status = 'Rejected by Executive'
-            send_approval_status_notification(order, 'rejected by executive')
-    
+    # Check if user has permission to approve
+    if current_user.is_sublead() and order.approval_status == 'Pending Sublead Approval':
+        # Check if this sublead was selected for this order
+        if current_user.email != order.sublead_email:
+            return jsonify({
+                'success': False, 
+                'error': 'You are not the designated sublead for this order'
+            }), 403
+            
+        order.approval_status = 'Pending Executive Approval'
+        # Notify executive for their approval
+        send_exec_approval_notification(order)
+        # Notify requester of sublead approval
+        send_approval_status_notification(order, 'approved by sublead')
+        
+    elif current_user.is_executive() and order.approval_status == 'Pending Executive Approval':
+        # Check if this executive was selected for this order
+        if current_user.email != order.exec_email:
+            return jsonify({
+                'success': False, 
+                'error': 'You are not the designated executive for this order'
+            }), 403
+            
+        order.exec_approval_status = 'Approved'
+        order.approval_status = 'Fully Approved'
+        send_approval_status_notification(order, 'fully approved')
+        
     else:
-        return jsonify({'error': 'Unauthorized'}), 403
+        return jsonify({
+            'success': False, 
+            'error': 'You do not have permission to approve this order at its current status'
+        }), 403
         
     db.session.commit()
     return jsonify({'success': True})
@@ -221,23 +231,24 @@ class Purchase(db.Model):
     is_deleted = db.Column(db.Boolean, default=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     urgency = db.Column(db.String(50), default='Neither')
-    exec_email = db.Column(db.String(200))
+    exec_email = db.Column(db.String(120))
     exec_approval_status = db.Column(db.String(50), default='Pending')
     arrival_photo = db.Column(db.String(200))
     arrived_at = db.Column(db.DateTime)
     is_resolved = db.Column(db.Boolean, default=False)
     shipped_at = db.Column(db.DateTime)
+    sublead_email = db.Column(db.String(120))
 
 # Add the User model before the Purchase model
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
-    full_name = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(20), default='member')  # member, sublead, executive, business
-    purchases = db.relationship('Purchase', backref='user', lazy=True)
+    password_hash = db.Column(db.String(128))
+    full_name = db.Column(db.String(120))
+    role = db.Column(db.String(20))
     reset_token = db.Column(db.String(100), unique=True)
     reset_token_expiry = db.Column(db.DateTime)
+    purchases = db.relationship('Purchase', backref='user', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -294,10 +305,10 @@ def init_default_accounts():
         if not User.query.filter_by(email=account['email']).first():
             new_user = User(
                 email=account['email'],
-                password_hash=generate_password_hash(account['password']),
                 full_name=account['full_name'],
                 role=account['role']
             )
+            new_user.set_password(account['password'])
             db.session.add(new_user)
             print(f"Created account for {account['email']} with role {account['role']}")
     
@@ -351,7 +362,8 @@ def create_purchase():
         requester_email=current_user.email,
         user_id=current_user.id,
         urgency=request.form.get('urgency', 'Neither'),
-        exec_email=exec_email,
+        sublead_email=sublead_email,  # Store the sublead email
+        exec_email=exec_email,  # Store the exec email
         approval_status=initial_status,
         exec_approval_status=exec_approval_status
     )
@@ -402,20 +414,86 @@ def login():
         flash('Invalid email or password')
     return render_template('login.html')
 
+APPROVED_EMAILS = {
+    'requester': [
+        'requester@mit.edu',
+        'ambecker@mit.edu', 'acdeleon@mit.edu', 'aaronhu@mit.edu', 'aaliu04@mit.edu', 
+        'ahindman@mit.edu', 'abimek@mit.edu', 'abrahaml@mit.edu', 'abrianna@mit.edu', 
+        'achyuta@mit.edu', 'avining@mit.edu', 'asyordan@mit.edu', 'advikan@mit.edu', 
+        'ahmadtak@mit.edu', 'aaurora@mit.edu', 'akivar@mit.edu', 'akshatc@mit.edu', 
+        'akap@mit.edu', 'aalahmad@mit.edu', 'alomba@mit.edu', 'alaysia@mit.edu', 
+        'amtenshi@mit.edu', 'alec.heif@gmail.com', 'ajr305@mit.edu', 'ale12@mit.edu', 
+        'agarbuz@mit.edu', 'abelyan@mit.edu', 'kamin135@mit.edu', 'ayhu@mit.edu', 
+        'ayuz@mit.edu', 'alexyxc@mit.edu', 'alex154@mit.edu', 'apmendez@mit.edu', 
+        'ashanafi@mit.edu', 'ajg19@mit.edu', 'alexyh@mit.edu', 'warrena@mit.edu', 
+        'astuder@mit.edu', 'acbanks@mit.edu', 'huynha@mit.edu', 'aliciar@mit.edu', 
+        'alicia.ramirez.2057@gmail.com', 'soong@mit.edu', 'lonz@mit.edu', 'ajmel@mit.edu', 
+        'alvinqz@mit.edu', 'ahulver@mit.edu', 'amir_a@mit.edu', 'amiusmmd@mit.edu', 
+        'amyjyo@mit.edu', 'anqik@mit.edu', 'anacamba@mit.edu', 'anadalai@mit.edu', 
+        'anahi183@mit.edu', 'ananthv@mit.edu', 'ajurs@mit.edu', 'anderjurs@hotmail.com', 
+        'andraye@mit.edu', 'aabreu@mit.edu', 'andresjc@mit.edu', 'andrew8@mit.edu', 
+        'andyou@mit.edu', 'andyy455@mit.edu', 'amwang28@mit.edu', 'dstaff@mit.edu', 
+        'anhdinh@mit.edu', 'anichari@mit.edu', 'anjalina@mit.edu', 'akim05@mit.edu', 
+        'annahj@mit.edu', 'ajvega@mit.edu', 'antonio3@mit.edu', 'apmendex@mit.edu', 
+        'arianee@mit.edu', 'arthchen@mit.edu', 'arthu@mit.edu', 'aryanj@mit.edu', 
+        'paparoa@mit.edu', 'aenglish@mit.edu', 'agallitt@mit.edu', 'ashj126@mit.edu', 
+        'aslid@mit.edu', 'atharvj@mit.edu', 'a_pal@mit.edu', 'mide@mit.edu', 
+        'barryxu2@mit.edu', 'belindav@mit.edu', 'bemnetaa@mit.edu', 'bxwu@mit.edu', 
+        'bljin@mit.edu', 'brupesh@mit.edu', 'boeseany@gmail.com', 'fsdi321@mit.edu', 
+        'brayn@mit.edu', 'bvjohn@mit.edu', 'chowb@mit.edu', 'zhang108@mit.edu', 
+        'bfors15@mit.edu', 'cai_bell@mit.edu', 'cjh1312@mit.edu', 'ceordone@gmail.com', 
+        'cam47@mit.edu', 'osbo@mit.edu', 'carlosgl@mit.edu', 'cgreq114@mit.edu', 
+        'carjiang@mit.edu', 'ctucker4@mit.edu', 'cbassett@mit.edu', 'cibanez@mit.edu', 
+        'catyao@mit.edu', 'cvorbach@mit.edu', 'chelton@mit.edu', 'chenharp@mit.edu', 
+        'cheyenne@mit.edu', 'c_zeng@mit.edu', 'duesselc@mit.edu', 'cpnguyen@mit.edu', 
+        'christianapakyen@gmail.com', 'clll@mit.edu', 'keedy@mit.edu', 'chriskc@mit.edu', 
+        'chrishc@mit.edu', 'chrisdlr@mit.edu', 'evagora@mit.edu', 'cindybw@mit.edu', 
+        'cttewari@mit.edu', 'cojocarugabi31415@gmail.com', 'cguo3@mit.edu', 
+        'd.g.lopez101@gmail.com', 'dtbrown@mit.edu', 'dnl_fdz@mit.edu', 'dlobelo@mit.edu', 
+        'dwang97@mit.edu', 'dzaiden@mit.edu', 'dmwhite@mit.edu', 'mapleint@mit.edu', 
+        'd_akin@mit.edu', 'dglopez@mit.edu', 'dfw@mit.edu', 'davidakinyoyenu@gmail.com', 
+        'debbiela@mit.edu', 'lukei@mit.edu', 'derek16@mit.edu', 'dianocly@mit.edu', 
+        'dr_orona@mit.edu', 'dcao2028@mit.edu', 'tjokro@mit.edu', 'cechez79@mit.edu', 
+        'dynguyen@mit.edu', 'dcryan@mit.edu'
+        # ... continuing with all other emails
+    ],
+    'sublead': [
+        'lzz20051017@gmail.com'  # Test sublead
+        'nic26@mit.edu'
+    ],
+    'executive': [
+        'zhizhen.luo07@gmail.com',  # Test exec
+        'hezpen@mit.edu',
+        'alex154@mit.edu',
+        'mochan@mit.edu',
+        'cttewari@mit.edu',
+        'ericz217@mit.edu'
+    ],
+    'business': [
+        'zhizhen@mit.edu'  # Test business
+    ]
+}
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('purchases'))
     
     if request.method == 'POST':
-        email = request.form.get('email')
+        email = request.form.get('email').lower()
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
         full_name = request.form.get('full_name')
         
-        # Validate MIT email
-        if not email.endswith('@mit.edu'):
-            flash('Please use your MIT email address')
+        # Check if email is approved in any role
+        role = None
+        for role_name, emails in APPROVED_EMAILS.items():
+            if email in emails:
+                role = role_name
+                break
+                
+        if role is None:
+            flash('Unapproved email. Please contact Kyle for approval.')
             return render_template('register.html')
         
         # Check if user already exists
@@ -428,13 +506,13 @@ def register():
             flash('Passwords do not match')
             return render_template('register.html')
         
-        # Create new user
+        # Create new user with the correct role
         new_user = User(
             email=email,
-            password_hash=generate_password_hash(password),
             full_name=full_name,
-            role='member'  # Default role
+            role=role
         )
+        new_user.set_password(password)
         
         db.session.add(new_user)
         db.session.commit()
@@ -454,28 +532,56 @@ def new_purchase():
 def purchases():
     # For My Current Orders section
     if current_user.is_business():
-        # Show orders that are fully approved or shipped (but not arrived), and their own orders
+        # Show orders that are fully approved, purchased, or shipped (but not arrived)
         current_orders = Purchase.query.filter(
             and_(
-                Purchase.is_deleted == False,  # Not deleted
-                Purchase.status != 'Arrived',  # Not arrived
+                Purchase.is_deleted == False,
+                Purchase.status != 'Arrived',
                 or_(
-                    Purchase.user_id == current_user.id,  # Their own orders
-                    # Orders that need business attention
-                    or_(
-                        Purchase.approval_status == 'Fully Approved',
-                        Purchase.status == 'Shipped'
+                    Purchase.user_id == current_user.id,
+                    Purchase.approval_status == 'Fully Approved',
+                    Purchase.status == 'Purchased',
+                    Purchase.status == 'Shipped'
+                )
+            )
+        ).order_by(Purchase.purchase_date.desc()).all()
+    elif current_user.is_sublead():
+        # Show their own orders and orders they need to approve
+        current_orders = Purchase.query.filter(
+            and_(
+                Purchase.is_deleted == False,
+                Purchase.status != 'Arrived',
+                or_(
+                    Purchase.user_id == current_user.id,
+                    and_(
+                        Purchase.sublead_email == current_user.email,
+                        Purchase.approval_status == 'Pending Sublead Approval'
+                    )
+                )
+            )
+        ).order_by(Purchase.purchase_date.desc()).all()
+    elif current_user.is_executive():
+        # Show their own orders and orders they need to approve
+        current_orders = Purchase.query.filter(
+            and_(
+                Purchase.is_deleted == False,
+                Purchase.status != 'Arrived',
+                or_(
+                    Purchase.user_id == current_user.id,
+                    and_(
+                        Purchase.exec_email == current_user.email,
+                        Purchase.approval_status == 'Pending Executive Approval'
                     )
                 )
             )
         ).order_by(Purchase.purchase_date.desc()).all()
     else:
-        # For other roles, keep existing logic but exclude arrived orders
+        # Regular users only see their own orders
         current_orders = Purchase.query.filter(
             and_(
                 Purchase.user_id == current_user.id,
                 Purchase.is_deleted == False,
-                Purchase.status != 'Arrived'  # Exclude arrived orders
+                Purchase.status != 'Arrived'
             )
         ).order_by(Purchase.purchase_date.desc()).all()
 
@@ -506,33 +612,33 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-@app.route('/order/<int:order_id>/details')
+@app.route('/purchase/<int:purchase_id>/details')
 @login_required
-def get_order_details(order_id):
-    order = Purchase.query.get_or_404(order_id)
+def get_purchase_details(purchase_id):
+    purchase = Purchase.query.get_or_404(purchase_id)
     return jsonify({
-        'id': order.id,
-        'item_name': order.item_name,
-        'vendor_name': order.vendor_name,
-        'item_link': order.item_link,
-        'price': order.price,
-        'shipping_cost': order.shipping_cost,
-        'quantity': order.quantity,
-        'subteam': order.subteam,
-        'subproject': order.subproject,
-        'purpose': order.purpose,
-        'notes': order.notes,
-        'requester_name': order.requester_name,
-        'requester_email': order.requester_email,
-        'purchase_date': order.purchase_date.strftime('%Y-%m-%d'),
-        'approval_status': order.approval_status,
-        'status': order.status,
-        'urgency': order.urgency,
-        'is_deleted': order.is_deleted,
-        'arrival_photo': order.arrival_photo,
-        'arrived_at': order.arrived_at.isoformat() if order.arrived_at else None,
-        'is_resolved': order.is_resolved,
-        'shipped_at': order.shipped_at.isoformat() if order.shipped_at else None
+        'id': purchase.id,
+        'item_name': purchase.item_name,
+        'vendor_name': purchase.vendor_name,
+        'item_link': purchase.item_link,
+        'price': purchase.price,
+        'shipping_cost': purchase.shipping_cost,
+        'quantity': purchase.quantity,
+        'subteam': purchase.subteam,
+        'subproject': purchase.subproject,
+        'purpose': purchase.purpose,
+        'notes': purchase.notes,
+        'requester_name': purchase.requester_name,
+        'requester_email': purchase.requester_email,
+        'purchase_date': purchase.purchase_date.strftime('%Y-%m-%d'),
+        'approval_status': purchase.approval_status,
+        'status': purchase.status,
+        'urgency': purchase.urgency,
+        'is_deleted': purchase.is_deleted,
+        'arrival_photo': purchase.arrival_photo,
+        'arrived_at': purchase.arrived_at.isoformat() if purchase.arrived_at else None,
+        'is_resolved': purchase.is_resolved,
+        'shipped_at': purchase.shipped_at.isoformat() if purchase.shipped_at else None
     })
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
@@ -548,10 +654,10 @@ def forgot_password():
             user.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
             db.session.commit()
             
-            # Send reset email
-            reset_url = url_for('reset_password', token=token, _external=True)
+            # Use the BASE_URL for the reset link
+            reset_url = f"{BASE_URL}{url_for('reset_password', token=token)}"
             msg = Message('Password Reset Request - MIT Motorsports',
-                         sender=('MIT Motorsports', 'sclark061951@gmail.com'),  # Display name will show as "MIT Motorsports"
+                         sender=('MIT Motorsports', 'sclark061951@gmail.com'),
                          recipients=[email])
             
             # Simple text email with the requested format
@@ -615,17 +721,23 @@ def update_purchase_status(purchase_id):
     new_status = request.form.get('status')
     
     try:
-        if new_status == 'shipped':
+        if new_status == 'purchased':
             if purchase.approval_status != 'Fully Approved':
                 return jsonify({'success': False, 'error': 'Order must be fully approved first'})
+            purchase.status = 'Purchased'
+            purchase.approval_status = 'Purchased'  # Update approval status too
+            
+        elif new_status == 'shipped':
+            if purchase.status != 'Purchased':
+                return jsonify({'success': False, 'error': 'Order must be purchased first'})
             purchase.status = 'Shipped'
+            purchase.approval_status = 'Shipped'  # Update approval status too
             purchase.shipped_at = datetime.utcnow()
             
         elif new_status == 'arrived':
             if purchase.status != 'Shipped':
                 return jsonify({'success': False, 'error': 'Order must be shipped first'})
             
-            # Handle photo upload
             if 'photo' not in request.files:
                 return jsonify({'success': False, 'error': 'No photo provided'})
                 
@@ -639,8 +751,10 @@ def update_purchase_status(purchase_id):
                 purchase.arrival_photo = filename
                 
             purchase.status = 'Arrived'
+            purchase.approval_status = 'Arrived'  # Update approval status too
             purchase.arrived_at = datetime.utcnow()
-            purchase.is_resolved = True  # Mark as resolved when arrived
+            purchase.is_resolved = True
+            purchase.is_deleted = True
             
         db.session.commit()
         return jsonify({'success': True})
@@ -648,11 +762,50 @@ def update_purchase_status(purchase_id):
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/update_name', methods=['POST'])
+@login_required
+def update_name():
+    data = request.get_json()
+    new_name = data.get('name')
+    
+    if not new_name:
+        return jsonify({'success': False, 'error': 'No name provided'})
+        
+    current_user.full_name = new_name
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
+@app.route('/purchase/<int:purchase_id>/delete', methods=['POST'])
+@login_required
+def delete_purchase(purchase_id):
+    purchase = Purchase.query.get_or_404(purchase_id)
+    purchase.is_deleted = True
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/purchase/<int:purchase_id>/restore', methods=['POST'])
+@login_required
+def restore_purchase(purchase_id):
+    purchase = Purchase.query.get_or_404(purchase_id)
+    
+    # If the order was marked as arrived, restore it to shipped state
+    if purchase.status == 'Arrived':
+        purchase.status = 'Shipped'
+        purchase.is_deleted = False
+        purchase.is_resolved = False
+        purchase.arrived_at = None
+        purchase.arrival_photo = None  # Optionally remove the arrival photo
+    else:
+        # Normal restore for deleted orders
+        purchase.is_deleted = False
+    
+    db.session.commit()
+    return jsonify({'success': True})
+
 # Add this at the very end of the file
 if __name__ == '__main__':
     with app.app_context():
-        # Drop all tables and recreate them
-        db.drop_all()
         db.create_all()
         
         # Create test accounts using the UserRole enum
@@ -703,6 +856,3 @@ if __name__ == '__main__':
             print(f"Error initializing test accounts: {str(e)}")
         
     app.run(debug=True)
-
-# Add this near the top of app.py, after creating the db
-migrate = Migrate(app, db)

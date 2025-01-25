@@ -6,6 +6,19 @@
     <style>
         .gradient-bg {
             background: linear-gradient(135deg, #f0f9ff 0%, #e6f3ff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .background-logo {
+            position: fixed;
+            width: 1000px;
+            height: auto;
+            opacity: 0.03;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: -1;
         }
         
         .question-box {
@@ -35,7 +48,10 @@
         }
     </style>
 </head>
-<body class="gradient-bg min-h-screen">
+<body class="gradient-bg">
+    <img src="{{ url_for('static', filename='images/Motorsports Logo Words.png') }}" 
+         alt="" 
+         class="background-logo">
     <div class="min-h-screen bg-gray-100">
         <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
             <div class="px-4 py-6 sm:px-0">
@@ -146,6 +162,7 @@
                         <select name="sublead_verifier" required
                                 class="form-input w-full px-3 py-2 rounded-md">
                             <option value="lzz20051017@gmail.com">Test</option>
+                            <!-- Add other sublead options here -->
                         </select>
                     </div>
 
