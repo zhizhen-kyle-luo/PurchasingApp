@@ -576,10 +576,10 @@ def purchases():
             )
         ).order_by(Purchase.purchase_date.desc()).all()
     else:
-        # Regular users only see their own orders
+        # Regular users only see orders where they are the requester (not arrived)
         current_orders = Purchase.query.filter(
             and_(
-                Purchase.user_id == current_user.id,
+                Purchase.requester_email == current_user.email,  # Changed from user_id to requester_email
                 Purchase.is_deleted == False,
                 Purchase.status != 'Arrived'
             )
@@ -714,8 +714,9 @@ def reset_password(token):
 @app.route('/purchase/<int:purchase_id>/update_status', methods=['POST'])
 @login_required
 def update_purchase_status(purchase_id):
+    # Check if user is a business account
     if not current_user.is_business():
-        return jsonify({'success': False, 'error': 'Unauthorized'})
+        return jsonify({'success': False, 'error': 'Only business accounts can update order status'}), 403
         
     purchase = Purchase.query.get_or_404(purchase_id)
     new_status = request.form.get('status')

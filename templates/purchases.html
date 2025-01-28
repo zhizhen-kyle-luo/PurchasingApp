@@ -239,6 +239,11 @@
     </div>
 
     <script>
+        // Add current user role information
+        const current_user = {
+            role: "{{ current_user.role }}"
+        };
+        
         let currentOrderId = null;
 
         function showMyCurrentOrders() {
@@ -305,6 +310,7 @@
         }
 
         function showOrderDetails(orderId) {
+            currentOrderId = orderId;
             fetch(`/purchase/${orderId}/details`)
                 .then(response => response.json())
                 .then(data => {
@@ -365,7 +371,7 @@
                         <div class="bg-gray-50 rounded-lg p-6 mb-6 shadow-sm">
                             <p class="text-gray-600 mb-4 italic">Note: After clicking any button, please wait a few moments for the action to complete. Do not click multiple times.</p>
                             
-                            <div class="flex flex-col gap-4 items-start">  <!-- Changed to flex-col and items-start for left alignment -->
+                            <div class="flex flex-col gap-4 items-start">
                                 <!-- Delete/Restore Button -->
                                 ${data.status !== 'Arrived' ? `
                                     ${!data.is_deleted ? `
@@ -379,15 +385,11 @@
                                             Restore Order
                                         </button>
                                     `}
-                                ` : `
-                                    <button onclick="restoreOrder(${orderId})"
-                                            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
-                                        Restore Order
-                                    </button>
-                                `}
+                                ` : ''}
 
                                 <!-- Approve Button -->
-                                ${data.approval_status === 'Pending Sublead Approval' || data.approval_status === 'Pending Executive Approval' ? `
+                                ${(current_user.role === 'sublead' && data.approval_status === 'Pending Sublead Approval') || 
+                                  (current_user.role === 'executive' && data.approval_status === 'Pending Executive Approval') ? `
                                     <button onclick="approveOrder(${orderId})"
                                             class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
                                         Approve Order
@@ -395,31 +397,33 @@
                                 ` : ''}
 
                                 <!-- Business Actions -->
-                                ${data.approval_status === 'Fully Approved' && data.status === 'Not Yet Purchased' ? `
-                                    <button onclick="markAsPurchased(${orderId})"
-                                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
-                                        Mark as Purchased
-                                    </button>
-                                ` : ''}
-
-                                ${data.status === 'Purchased' ? `
-                                    <button onclick="markAsShipped(${orderId})"
-                                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
-                                        Mark as Shipped
-                                    </button>
-                                ` : ''}
-
-                                ${data.status === 'Shipped' ? `
-                                    <form onsubmit="markAsArrived(event, ${orderId})" class="flex flex-col gap-2">
-                                        <input type="file" id="arrivalPhoto" required accept="image/*"
-                                               class="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
-                                                      file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
-                                                      hover:file:bg-blue-100">
-                                        <button type="submit"
-                                                class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
-                                            Mark as Arrived
+                                ${current_user.role === 'business' ? `
+                                    ${data.approval_status === 'Fully Approved' && data.status === 'Not Yet Purchased' ? `
+                                        <button onclick="markAsPurchased(${orderId})"
+                                                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+                                            Mark as Purchased
                                         </button>
-                                    </form>
+                                    ` : ''}
+
+                                    ${data.status === 'Purchased' ? `
+                                        <button onclick="markAsShipped(${orderId})"
+                                                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+                                            Mark as Shipped
+                                        </button>
+                                    ` : ''}
+
+                                    ${data.status === 'Shipped' ? `
+                                        <form onsubmit="markAsArrived(event, ${orderId})" class="flex flex-col gap-2">
+                                            <input type="file" id="arrivalPhoto" required accept="image/*"
+                                                   class="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
+                                                          file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
+                                                          hover:file:bg-blue-100">
+                                            <button type="submit"
+                                                    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
+                                                Mark as Arrived
+                                            </button>
+                                        </form>
+                                    ` : ''}
                                 ` : ''}
 
                                 <!-- Show arrival photo if exists -->
