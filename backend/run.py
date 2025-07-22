@@ -2,6 +2,8 @@
 Application entry point
 """
 import os
+import sys
+sys.path.append(os.path.dirname(__file__))
 from flask.cli import with_appcontext
 import click
 

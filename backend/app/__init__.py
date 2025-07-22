@@ -10,6 +10,9 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_cors import CORS
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from config.settings import get_config
 from .models.base import db
 
