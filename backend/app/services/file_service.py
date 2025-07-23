@@ -15,9 +15,28 @@ class FileService:
     """Service for handling file uploads and management"""
     
     def __init__(self):
-        self.upload_folder = current_app.config.get('UPLOAD_FOLDER', 'static/uploads')
-        self.allowed_extensions = current_app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'pdf'})
-        self.max_file_size = current_app.config.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024)  # 16MB
+        # Lazy load config to avoid application context issues
+        self._upload_folder = None
+        self._allowed_extensions = None
+        self._max_file_size = None
+    
+    @property
+    def upload_folder(self):
+        if self._upload_folder is None:
+            self._upload_folder = current_app.config.get('UPLOAD_FOLDER', 'static/uploads')
+        return self._upload_folder
+    
+    @property
+    def allowed_extensions(self):
+        if self._allowed_extensions is None:
+            self._allowed_extensions = current_app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'pdf'})
+        return self._allowed_extensions
+    
+    @property
+    def max_file_size(self):
+        if self._max_file_size is None:
+            self._max_file_size = current_app.config.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024)  # 16MB
+        return self._max_file_size
     
     def is_allowed_file(self, filename: str) -> bool:
         """Check if file extension is allowed"""
