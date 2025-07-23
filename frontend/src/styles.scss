@@ -1,12 +1,12 @@
 /* Global Styles */
-@import '@angular/material/theming';
+@use '@angular/material' as mat;
 
-// Define custom theme
-$custom-primary: mat-palette($mat-blue, 600);
-$custom-accent: mat-palette($mat-orange, 500);
-$custom-warn: mat-palette($mat-red);
+// Define custom theme using new Angular 17 syntax
+$custom-primary: mat.define-palette(mat.$blue-palette, 600);
+$custom-accent: mat.define-palette(mat.$orange-palette, 500);
+$custom-warn: mat.define-palette(mat.$red-palette);
 
-$custom-theme: mat-light-theme((
+$custom-theme: mat.define-light-theme((
   color: (
     primary: $custom-primary,
     accent: $custom-accent,
@@ -14,8 +14,8 @@ $custom-theme: mat-light-theme((
   )
 ));
 
-@include mat-core();
-@include mat-all-component-themes($custom-theme);
+@include mat.core();
+@include mat.all-component-themes($custom-theme);
 
 /* Global styles */
 html, body {

@@ -1,49 +1,83 @@
 #!/usr/bin/env python3
-"""Database migration script"""
+"""
+Database migration and initialization script
+"""
 import os
 import sys
-sys.path.append(os.path.dirname(__file__))
+
+# Add the backend directory to Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app import create_app
 from app.models.base import db
-from app.models import User, Purchase, UserRole
+from app.models import User, UserRole
 
-def migrate_from_old_db():
-    """Migrate data from old monolithic app.py database"""
+def init_database():
+    """Initialize the database with tables and test users"""
     app = create_app()
+    
     with app.app_context():
-        # Check if old tables exist and migrate data
-        try:
-            # This would contain actual migration logic
-            print("Migration completed successfully")
-        except Exception as e:
-            print(f"Migration failed: {e}")
-
-def init_fresh_db():
-    """Initialize fresh database with test data"""
-    app = create_app()
-    with app.app_context():
+        # Create all tables
+        print("🔧 Creating database tables...")
         db.create_all()
+        print("✅ Database tables created!")
+        
+        # Check if users already exist
+        user_count = User.query.count()
+        if user_count > 0:
+            print(f"✅ Database already has {user_count} users")
+            return
         
         # Create test users
+        print("🔧 Creating test users...")
         test_users = [
-            {'email': 'requester@mit.edu', 'name': 'Test Requester', 'role': UserRole.REQUESTER},
-            {'email': 'sublead@mit.edu', 'name': 'Test Sublead', 'role': UserRole.SUBLEAD},
-            {'email': 'executive@mit.edu', 'name': 'Test Executive', 'role': UserRole.EXECUTIVE},
-            {'email': 'business@mit.edu', 'name': 'Test Business', 'role': UserRole.BUSINESS}
+            {
+                'email': 'requester@mit.edu',
+                'password': 'password123',
+                'first_name': 'Test',
+                'last_name': 'Requester',
+                'role': UserRole.REQUESTER
+            },
+            {
+                'email': 'sublead@mit.edu',
+                'password': 'password123',
+                'first_name': 'Test',
+                'last_name': 'Sublead',
+                'role': UserRole.SUBLEAD
+            },
+            {
+                'email': 'executive@mit.edu',
+                'password': 'password123',
+                'first_name': 'Test',
+                'last_name': 'Executive',
+                'role': UserRole.EXECUTIVE
+            },
+            {
+                'email': 'business@mit.edu',
+                'password': 'password123',
+                'first_name': 'Test',
+                'last_name': 'Business',
+                'role': UserRole.BUSINESS
+            }
         ]
         
         for user_data in test_users:
-            if not User.query.filter_by(email=user_data['email']).first():
-                user = User(email=user_data['email'], full_name=user_data['name'], role=user_data['role'])
-                user.set_password('password123')
-                db.session.add(user)
+            user = User(
+                email=user_data['email'],
+                full_name=f"{user_data['first_name']} {user_data['last_name']}",
+                role=user_data['role']
+            )
+            user.set_password(user_data['password'])
+            db.session.add(user)
+            print(f"✅ Created user: {user_data['email']}")
         
-        db.session.commit()
-        print("Fresh database initialized with test users")
+        try:
+            db.session.commit()
+            print("✅ All test users created successfully!")
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Error creating users: {e}")
+            raise
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1 and sys.argv[1] == 'migrate':
-        migrate_from_old_db()
-    else:
-        init_fresh_db()
+    init_database()

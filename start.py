@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-"""Unified startup script for the purchasing system"""
 import os
 import sys
 import subprocess
@@ -8,13 +6,12 @@ import time
 def start_backend():
     """Start the Flask backend"""
     os.chdir('backend')
-    if not os.path.exists('instance'):
-        os.makedirs('instance')
     
-    # Initialize database if needed
-    if not os.path.exists('instance/purchases_dev.db'):
-        print("Initializing database...")
-        subprocess.run([sys.executable, 'migrate.py'])
+    # Initialize database and create test users
+    print("Initializing database...")
+    subprocess.run(['flask', 'init_db'], shell=True)
+    print("Creating test users...")
+    subprocess.run(['flask', 'create_test_users'], shell=True)
     
     print("Starting backend server...")
     subprocess.Popen([sys.executable, 'run.py'])
@@ -25,10 +22,10 @@ def start_frontend():
     os.chdir('frontend')
     if not os.path.exists('node_modules'):
         print("Installing frontend dependencies...")
-        subprocess.run(['npm', 'install'])
+        subprocess.run(['npm.cmd', 'install'], shell=True)
     
     print("Starting frontend server...")
-    subprocess.Popen(['npm', 'start'])
+    subprocess.Popen(['npm.cmd', 'start'], shell=True)
     os.chdir('..')
 
 def main():

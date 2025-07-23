@@ -16,7 +16,15 @@ class Config:
     
     # Database
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_RECORD_QUERIES = True
+    
+    # Construct PostgreSQL connection string from environment variables
+    POSTGRES_USER = os.environ.get('POSTGRES_USER')
+    POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD')
+    POSTGRES_HOST = os.environ.get('POSTGRES_HOST')
+    POSTGRES_PORT = os.environ.get('POSTGRES_PORT')
+    POSTGRES_DB = os.environ.get('POSTGRES_DB')
+    
+    SQLALCHEMY_DATABASE_URI = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
     
     # File Upload
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
@@ -47,8 +55,6 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        f'sqlite:///{BASE_DIR}/instance/purchases_dev.db'
     
     # Email debug
     MAIL_DEBUG = True
@@ -58,24 +64,9 @@ class DevelopmentConfig(Config):
     LOG_LEVEL = 'DEBUG'
 
 
-class TestingConfig(Config):
-    """Testing configuration"""
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-    WTF_CSRF_ENABLED = False
-    MAIL_SUPPRESS_SEND = True
-    
-    # Logging
-    LOG_LEVEL = 'WARNING'
-
-
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
-    
-    # Database - PostgreSQL for production
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        f'postgresql://user:password@localhost/purchasing_app'
     
     # Security
     SESSION_COOKIE_SECURE = True
@@ -95,7 +86,6 @@ class ProductionConfig(Config):
 # Configuration mapping
 config = {
     'development': DevelopmentConfig,
-    'testing': TestingConfig,
     'production': ProductionConfig,
     'default': DevelopmentConfig
 }

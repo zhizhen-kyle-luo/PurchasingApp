@@ -1,6 +1,13 @@
 # Purchasing App
 
-This is a web application for managing purchases, built with a Python/Flask backend and an Angular frontend.
+This is a web application for managing purchases, built with an Angular frontend and a Python/Flask backend.
+
+## Tech Stack
+
+- **Frontend:** Angular
+- **Backend:** Flask (Python)
+- **Database:** PostgreSQL
+
 
 ## Project Structure
 
@@ -26,12 +33,19 @@ The easiest way to get the application running is to use the `start.py` script. 
     ```
 
 This will:
--   Initialize the database if it doesn't exist.
+-   Initialize the database and create test users if the database does not exist.
 -   Start the backend server.
 -   Install frontend dependencies if they are missing.
 -   Start the frontend server.
 
 The application will be available at `http://localhost:4200/`.
+
+**Important:**
+- If the database file (`backend/instance/purchases_dev.db`) already exists, `start.py` will NOT re-initialize the database or create test users. If you need to reset the database (for example, if test users are missing or you encounter login errors), you should delete the `backend/instance/purchases_dev.db` file and re-run `python start.py`, or manually run the migration script:
+    ```bash
+    cd backend
+    ../venv/Scripts/python.exe migrate.py
+    ```
 
 ## Manual Setup
 
@@ -63,21 +77,15 @@ You will need one terminal for the backend.
     pip install -r requirements.txt
     ```
 
-4.  **Initialize the database:**
-    This only needs to be done once.
+4.  **Initialize the database and create test users:**
+    This only needs to be done once, unless you want to reset the database.
     ```bash
-    flask init-db
+    python migrate.py
     ```
 
-5.  **Create test users:**
-    This only needs to be done once.
+5.  **Run the backend server:**
     ```bash
-    flask create-test-users
-    ```
-
-6.  **Run the backend server:**
-    ```bash
-    flask run
+    python run.py
     ```
 
 The backend server will be running at `http://127.0.0.1:5000`.
@@ -105,7 +113,7 @@ The frontend development server will be running at `http://localhost:4200/`.
 
 ## Test Accounts
 
-The following test accounts are available:
+The following test accounts are available (created automatically if the database is initialized from scratch):
 
 -   **Email:** `requester@mit.edu` / **Password:** `password123`
 -   **Email:** `sublead@mit.edu` / **Password:** `password123`
