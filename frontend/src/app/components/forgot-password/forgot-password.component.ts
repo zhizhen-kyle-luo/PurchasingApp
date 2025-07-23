@@ -56,7 +56,7 @@ import { AuthService } from '../../services/auth.service';
     }
     .background-logo {
         position: fixed;
-        width: 600px;
+        width: 1000px;
         height: auto;
         opacity: 0.1;
         top: 50%;

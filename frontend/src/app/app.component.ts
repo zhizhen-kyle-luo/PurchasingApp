@@ -131,7 +131,7 @@ import { User } from './models/user.model';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #f0f9ff 0%, #e6f3ff 100%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
     .active {
