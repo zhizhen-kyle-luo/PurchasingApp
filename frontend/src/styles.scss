@@ -1,5 +1,10 @@
-/* Global Styles */
 @use '@angular/material' as mat;
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global Styles */
 
 // Define custom theme using new Angular 17 syntax
 $custom-primary: mat.define-palette(mat.$blue-palette, 600);
