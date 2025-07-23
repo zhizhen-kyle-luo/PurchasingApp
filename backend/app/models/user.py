@@ -28,9 +28,9 @@ class User(UserMixin, BaseModel):
     __tablename__ = 'users'
     
     # Basic info
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(128))
-    full_name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False, index=True)  # Increased from 120
+    password_hash = db.Column(db.String(255), nullable=False)  # Increased from 200
+    full_name = db.Column(db.String(255), nullable=False)  # Increased from 120
     role = db.Column(db.Enum(UserRole), nullable=False, default=UserRole.REQUESTER)
     
     # Account status
@@ -38,7 +38,7 @@ class User(UserMixin, BaseModel):
     email_verified = db.Column(db.Boolean, default=False, nullable=False)
     
     # Password reset
-    reset_token = db.Column(db.String(100), unique=True)
+    reset_token = db.Column(db.String(255), unique=True)  # Increased from 100
     reset_token_expiry = db.Column(db.DateTime)
     
     # Last login tracking
@@ -141,19 +141,14 @@ class User(UserMixin, BaseModel):
         return {
             'requester': [
                 'requester@mit.edu',
-                'ambecker@mit.edu', 'acdeleon@mit.edu', 'aaronhu@mit.edu', 'aaliu04@mit.edu',
-                # ... (rest of the approved emails from original code)
             ],
             'sublead': [
-                'lzz20051017@gmail.com',
-                # ... (sublead emails)
+                'sublead@mit.edu',
             ],
             'executive': [
-                'zhizhen.luo07@gmail.com',
-                # ... (executive emails)
+                'executive@mit.edu',
             ],
             'business': [
-                'zhizhen@mit.edu',
-                # ... (business emails)
+                'business@mit.edu',
             ]
         }

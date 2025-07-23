@@ -5,16 +5,22 @@ import time
 
 def start_backend():
     """Start the Flask backend"""
+    # Load .env file
+    from dotenv import dotenv_values
+    env_vars = dotenv_values('.env')
+    
+    # Create a copy of the current environment and update with .env values
+    backend_env = os.environ.copy()
+    backend_env.update(env_vars)
+    
     os.chdir('backend')
     
     # Initialize database and create test users
-    print("Initializing database...")
-    subprocess.run(['flask', 'init_db'], shell=True)
-    print("Creating test users...")
-    subprocess.run(['flask', 'create_test_users'], shell=True)
+    print("Initializing database and creating test users...")
+    subprocess.run([sys.executable, 'migrate.py'], env=backend_env, shell=True)
     
     print("Starting backend server...")
-    subprocess.Popen([sys.executable, 'run.py'])
+    subprocess.Popen([sys.executable, 'run.py'], env=backend_env)
     os.chdir('..')
 
 def start_frontend():
@@ -29,7 +35,7 @@ def start_frontend():
     os.chdir('..')
 
 def main():
-    print("🚀 Starting MIT Motorsports Purchasing System...")
+    print("Starting MIT Motorsports Purchasing System...")
     
     # Start backend
     start_backend()
@@ -38,11 +44,11 @@ def main():
     # Start frontend
     start_frontend()
     
-    print("\n✅ System started!")
-    print("📊 Backend: http://localhost:5000")
-    print("🌐 Frontend: http://localhost:4200")
-    print("📖 API Docs: http://localhost:5000/health")
-    print("\n👤 Test accounts:")
+    print("\nSystem started!")
+    print("Backend: http://localhost:5000")
+    print("Frontend: http://localhost:4200")
+    print("API Docs: http://localhost:5000/health")
+    print("\nTest accounts:")
     print("   requester@mit.edu / password123")
     print("   sublead@mit.edu / password123")
     print("   executive@mit.edu / password123")
