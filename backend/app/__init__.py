@@ -4,7 +4,7 @@ Application factory for the Purchasing App
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_mail import Mail
@@ -20,7 +20,6 @@ from .models.base import db
 # Initialize extensions
 login_manager = LoginManager()
 mail = Mail()
-cors = CORS()
 
 
 def create_app(config_name=None):
@@ -38,7 +37,14 @@ def create_app(config_name=None):
     db.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
-    cors.init_app(app, origins=app.config['CORS_ORIGINS'])
+    
+    # Configure CORS with more explicit settings
+    CORS(app, 
+         origins=app.config['CORS_ORIGINS'],
+         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+         allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+         supports_credentials=True,
+         expose_headers=['Content-Range', 'X-Content-Range'])
     
     # Configure login manager
     login_manager.login_view = 'auth.login'
@@ -49,6 +55,17 @@ def create_app(config_name=None):
     def load_user(user_id):
         from .models import User
         return User.query.get(int(user_id))
+    
+    # Add after_request handler for additional CORS headers
+    @app.after_request
+    def after_request(response):
+        origin = request.headers.get('Origin')
+        if origin in app.config['CORS_ORIGINS']:
+            response.headers.add('Access-Control-Allow-Origin', origin)
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin')
+            response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH')
+            response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
     
     # Register blueprints
     from .views import register_blueprints
