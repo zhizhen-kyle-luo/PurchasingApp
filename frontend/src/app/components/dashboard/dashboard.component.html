@@ -1,0 +1,24 @@
+<div class="flex">
+  <app-sidebar (viewChanged)="onViewChanged($event)"></app-sidebar>
+  <div class="main-content flex-1 p-8">
+    <h1 class="text-2xl font-bold mb-6">{{ title }}</h1>
+    <div [ngSwitch]="currentView">
+      <div *ngSwitchCase="'myCurrentOrders'">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <app-order-card *ngFor="let order of myCurrentOrders" [order]="order" (cardClick)="showOrderDetails($event)"></app-order-card>
+        </div>
+      </div>
+      <div *ngSwitchCase="'allCurrentOrders'">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <app-order-card *ngFor="let order of allCurrentOrders" [order]="order" (cardClick)="showOrderDetails($event)"></app-order-card>
+        </div>
+      </div>
+      <div *ngSwitchCase="'allPastOrders'">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <app-order-card *ngFor="let order of allPastOrders" [order]="order" (cardClick)="showOrderDetails($event)"></app-order-card>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<app-order-details-modal [order]="selectedOrder" [showModal]="showModal" (closeModalEvent)="closeModal()" (orderUpdated)="loadOrders()"></app-order-details-modal>

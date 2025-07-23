@@ -1,0 +1,85 @@
+<div class="modal" [class.is-active]="showModal">
+  <div class="modal-background" (click)="closeModal()"></div>
+  <div class="modal-content">
+    <div class="box">
+      <h2 class="text-2xl font-bold text-left mb-6">Order Details</h2>
+      <button class="modal-close is-large" aria-label="close" (click)="closeModal()"></button>
+      <div *ngIf="order">
+        <!-- Order Information Box -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-6 shadow-sm">
+          <h3 class="text-lg font-semibold mb-4">Order Information</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="mb-2"><strong>Item:</strong> {{ order.item_name }}</p>
+              <p class="mb-2"><strong>Vendor:</strong> {{ order.vendor_name }}</p>
+              <p class="mb-2"><strong>Link:</strong>
+                <a *ngIf="order.item_link" [href]="order.item_link" target="_blank" class="text-blue-500 hover:underline">{{ order.item_link }}</a>
+                <span *ngIf="!order.item_link">No link provided</span>
+              </p>
+              <p class="mb-2"><strong>Price:</strong> {{ order.price | currency }}</p>
+            </div>
+            <div>
+              <p class="mb-2"><strong>Shipping:</strong> {{ order.shipping_cost | currency }}</p>
+              <p class="mb-2"><strong>Total:</strong> {{ order.price + order.shipping_cost | currency }}</p>
+              <p class="mb-2"><strong>Quantity:</strong> {{ order.quantity }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Team Information Box -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-6 shadow-sm">
+          <h3 class="text-lg font-semibold mb-4">Team Information</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="mb-2"><strong>Subteam:</strong> {{ order.subteam }}</p>
+              <p class="mb-2"><strong>Sub-project:</strong> {{ order.subproject }}</p>
+              <p class="mb-2"><strong>Requester:</strong> {{ order.requester_name }}</p>
+              <p class="mb-2"><strong>Purchase Date:</strong> {{ order.purchase_date | date:'yyyy-MM-dd' }}</p>
+            </div>
+            <div>
+              <p class="mb-2"><strong>Status:</strong> {{ order.status }}</p>
+              <p class="mb-2"><strong>Approval Status:</strong> {{ order.approval_status }}</p>
+              <p class="mb-2"><strong>Urgency:</strong> {{ order.urgency }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Purpose & Notes Box -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-6 shadow-sm">
+          <h3 class="text-lg font-semibold mb-4">Purpose & Notes</h3>
+          <p class="mb-2"><strong>Purpose:</strong> {{ order.purpose }}</p>
+          <p class="mb-2" *ngIf="order.notes"><strong>Additional Notes:</strong> {{ order.notes }}</p>
+        </div>
+
+        <!-- Action Buttons Section -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-6 shadow-sm">
+          <p class="text-gray-600 mb-4 italic">Note: After clicking any button, please wait a few moments for the action to complete. Do not click multiple times.</p>
+          <div class="flex flex-col gap-4 items-start" *ngIf="order">
+            <!-- Delete/Restore Button -->
+            <button *ngIf="order.status !== 'Arrived' && !order.is_deleted" (click)="deleteOrder()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors">Delete Order</button>
+            <button *ngIf="order.is_deleted" (click)="restoreOrder()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">Restore Order</button>
+
+            <!-- Approve Button -->
+            <button *ngIf="authService.canApproveOrders && ((authService.isSublead && order.approval_status === 'Pending Sublead Approval') || (authService.isExecutive && order.approval_status === 'Pending Executive Approval'))" (click)="approveOrder()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">Approve Order</button>
+
+            <!-- Business Actions -->
+            <div *ngIf="authService.isBusiness">
+              <button *ngIf="order.approval_status === 'Fully Approved' && order.status === 'Not Yet Purchased'" (click)="markAsPurchased()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">Mark as Purchased</button>
+              <button *ngIf="order.status === 'Purchased'" (click)="markAsShipped()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">Mark as Shipped</button>
+              <div *ngIf="order.status === 'Shipped'">
+                <input type="file" (change)="onFileSelected($event)" accept="image/*" class="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <button (click)="markAsArrived()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">Mark as Arrived</button>
+              </div>
+            </div>
+
+            <!-- Show arrival photo if exists -->
+            <div *ngIf="order.arrival_photo" class="mt-4">
+              <h4 class="font-semibold mb-2">Arrival Photo:</h4>
+              <img [src]="order.arrival_photo" alt="Arrival Photo" class="max-w-full h-auto rounded">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
