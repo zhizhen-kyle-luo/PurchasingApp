@@ -1,0 +1,12 @@
+@@ .. @@
+ flask
+ flask-sqlalchemy
+ flask-login
+ flask-mail
+ flask-cors
+ werkzeug
+ pillow
+ python-dotenv
+ psycopg2-binary
+ gunicorn
++email-validator
