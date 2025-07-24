@@ -1,6 +1,14 @@
 # Purchasing App
 
-This is a web application for managing purchases, built with an Angular frontend and a Python/Flask backend.
+This is a web application for managing purchases, built with an Angular frontend and a Python/Flask backend. 
+
+There are 4 types of account, requester, sublead, executive, and business. A requester account has the ability to create an order, which will be sent to sublead for approval; once approved, it will be sent to executive for approval; once approved, it will be sent to business where they will manually track the status of order (Not Purchased -> Purchased -> Shipped -> Delivered) and update it accordingly. Once an order has been marked as Delivered, the original acount that request this order will see an Received button that replaces the delete button that basically does the same thing as the delete button. In the 3 total status transition carried out by business, they will be able to add an optional note. For the last transition to delievered, they can also upload optional image that supports JPEG, PNG, and HEIC. For sublead, its own will only need to be approved by executive and executive needs no approval. Business account needs no approval. 
+
+For each order, there will be a button to delete it, which archives in in the all past orders page. There, you can restore the item. Restoring item willl restore this item to the status the order was at before delete button was clicked. The status flow of an order goes from Not Approved, Approved, Not Purchased, Purchased, Shipped, Delivered, and Received. These status are mutually exclusive.
+
+For development, no email is actually being sent. For production, you will be notified whenver you needs to approve an order or equivalently, for business account only, any order has becomed fully approved and so is under not purchased status. You will also be notified if your order has been approved for every approval you need (so requester will get 2 until fully approved, sublead gets 1, business and executive will get 0 because they don't need approval) as well as when your order has been delivered. 
+
+My current order shows all order created by you; for business acounts, here will also show all orders having status Not Purchased, Purchased, Shipped, Delivered, as these are what orders they have to work on. All current order shows all active orders made by anyone. All past orders shows all deleted or has been marked as received. The default order in which orders are shown in these 3 pages are the most recent comes first, but they should all be able to filter by vendor, requester name (who created the order), date of creation, status, urgency, subteam, sub-project. Note in my current order for non-business accounts, they should not be able to filter by requester name because my current order will show order created by me only. Business account will have this as a filter option because they will see all orders having status Not Purchased, Purchased, Shipped, Delivered. Note these filter options are not mutually exclusive and you can filtered using multiple options.
 
 ## Tech Stack
 
