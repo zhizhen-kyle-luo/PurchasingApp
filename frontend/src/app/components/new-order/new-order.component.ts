@@ -1,14 +1,20 @@
 import { Component, OnInit } from "@angular/core";
-import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { CommonModule } from "@angular/common";
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from "@angular/forms";
+import { Router, RouterModule } from "@angular/router";
+import { PurchaseService } from "../../services/purchase.service";
+import { AuthService } from "../../services/auth.service";
 
 @Component({
   selector: "app-new-order",
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: "./new-order.component.html",
   styleUrls: ["./new-order.component.scss"],
 })
 export class NewOrderComponent implements OnInit {
   orderForm: FormGroup;
-  showSubleadVerifier = true; // TODO: set based on user role
+  showSubleadVerifier = true;
   fields = [
     {
       name: "vendor_name",
@@ -162,7 +168,12 @@ export class NewOrderComponent implements OnInit {
     ],
   };
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private purchaseService: PurchaseService,
+    private authService: AuthService,
+    private router: Router
+  ) {
     this.orderForm = this.fb.group({
       vendor_name: ["", Validators.required],
       item_name: ["", Validators.required],
@@ -177,31 +188,56 @@ export class NewOrderComponent implements OnInit {
       urgency: ["Neither", Validators.required],
       sublead_verifier: [""],
       exec_verifier: ["", Validators.required],
+      requester_name: [""],
+      requester_email: [""]
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    const user = this.authService.currentUser;
+    if (user) {
+      this.orderForm.patchValue({
+        requester_name: user.full_name,
+        requester_email: user.email
+      });
+    }
+  }
 
   onSelectChange(fieldName: string, event: any) {
     if (fieldName === "subteam") {
       const subteam = event.target.value;
       const subprojectField = this.fields.find((f) => f.name === "subproject");
-      subprojectField.options = [
-        { value: "", text: "Select a Sub-project" },
-        ...(this.SUBPROJECT_OPTIONS[subteam] || []).map((opt: string) => ({
-          value: opt,
-          text: opt,
-        })),
-      ];
+      if (subprojectField) {
+        subprojectField.options = [
+          { value: "", text: "Select a Sub-project" },
+          ...(this.SUBPROJECT_OPTIONS[subteam] || []).map((opt: string) => ({
+            value: opt,
+            text: opt,
+          })),
+        ];
+      }
       this.orderForm.patchValue({ subproject: "" });
     }
   }
 
   submitOrder() {
     if (this.orderForm.valid) {
-      // TODO: submit logic
-      alert("Order submitted!");
-      this.orderForm.reset();
+      this.purchaseService.createPurchase(this.orderForm.value).subscribe({
+        next: (response) => {
+          if (response.success) {
+            alert("Order submitted successfully!");
+            this.router.navigate(['/dashboard']);
+          } else {
+            alert("Error: " + response.message);
+          }
+        },
+        error: (error) => {
+          console.error('Error submitting order:', error);
+          alert("Failed to submit order. Please try again.");
+        }
+      });
+    } else {
+      alert("Please fill in all required fields.");
     }
   }
 }
