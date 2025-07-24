@@ -1,10 +1,17 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Purchase } from '../../models/purchase.model';
 import { PurchaseService } from '../../services/purchase.service';
 import { AuthService } from '../../services/auth.service';
+import { SidebarComponent } from '../sidebar/sidebar.component';
+import { OrderCardComponent } from '../order-card/order-card.component';
+import { OrderDetailsModalComponent } from '../order-details-modal/order-details-modal.component';
+import { ChangeNameModalComponent } from '../change-name-modal/change-name-modal.component';
 
 @Component({
   selector: 'app-dashboard',
+  standalone: true,
+  imports: [CommonModule, SidebarComponent, OrderCardComponent, OrderDetailsModalComponent, ChangeNameModalComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })

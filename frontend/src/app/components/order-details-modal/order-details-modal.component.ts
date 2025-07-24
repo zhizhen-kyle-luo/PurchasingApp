@@ -1,10 +1,13 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Purchase } from '../../models/purchase.model';
 import { AuthService } from '../../services/auth.service';
 import { PurchaseService } from '../../services/purchase.service';
 
 @Component({
   selector: 'app-order-details-modal',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './order-details-modal.component.html',
   styleUrls: ['./order-details-modal.component.scss']
 })

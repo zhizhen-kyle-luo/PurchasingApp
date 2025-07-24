@@ -5,17 +5,17 @@
     <div [ngSwitch]="currentView">
       <div *ngSwitchCase="'myCurrentOrders'">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <app-order-card *ngFor="let order of myCurrentOrders" [order]="order" (cardClick)="showOrderDetails($event)"></app-order-card>
+          <app-order-card *ngFor="let order of myCurrentOrders" [order]="order" (cardClick)="showOrderDetails(order)"></app-order-card>
         </div>
       </div>
       <div *ngSwitchCase="'allCurrentOrders'">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <app-order-card *ngFor="let order of allCurrentOrders" [order]="order" (cardClick)="showOrderDetails($event)"></app-order-card>
+          <app-order-card *ngFor="let order of allCurrentOrders" [order]="order" (cardClick)="showOrderDetails(order)"></app-order-card>
         </div>
       </div>
       <div *ngSwitchCase="'allPastOrders'">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <app-order-card *ngFor="let order of allPastOrders" [order]="order" (cardClick)="showOrderDetails($event)"></app-order-card>
+          <app-order-card *ngFor="let order of allPastOrders" [order]="order" (cardClick)="showOrderDetails(order)"></app-order-card>
         </div>
       </div>
     </div>
