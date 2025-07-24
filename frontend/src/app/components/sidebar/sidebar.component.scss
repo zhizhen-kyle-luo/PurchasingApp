@@ -69,15 +69,16 @@
   text-decoration: underline;
 }
 
-nav {
+.nav-menu {
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding-top: 1rem;
 }
 
 .nav-item {
   display: block;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 1.5rem;
   color: #9ca3af;
   text-decoration: none;
   transition: all 0.2s ease;
@@ -87,6 +88,7 @@ nav {
   width: 100%;
   text-align: left;
   cursor: pointer;
+  margin-bottom: 0.25rem;
 }
 
 .nav-item:hover {
@@ -99,13 +101,17 @@ nav {
   color: white;
 }
 
-.nav-item.text-red-400 {
-  color: #ef4444;
+.nav-item.sign-out {
+  margin-top: auto;
+  margin-bottom: 1rem;
+  color: #9ca3af;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1.5rem;
 }
 
-.nav-item.text-red-400:hover {
-  background-color: rgba(239, 68, 68, 0.08);
-  color: #fff;
+.nav-item.sign-out:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
 }
 
 .mt-auto {

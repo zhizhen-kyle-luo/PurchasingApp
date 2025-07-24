@@ -56,6 +56,16 @@ export class SidebarComponent {
   }
 
   logout() {
-    this.authService.logout();
+    this.authService.logout().subscribe({
+      next: () => {
+        // Logout successful, redirect to login
+        window.location.href = '/login';
+      },
+      error: (error) => {
+        console.error('Logout error:', error);
+        // Even if logout fails, redirect to login
+        window.location.href = '/login';
+      }
+    });
   }
 }
