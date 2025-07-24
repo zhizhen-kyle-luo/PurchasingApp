@@ -1,30 +1,58 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { AuthService } from '../../services/auth.service';
+import { Component, EventEmitter, Output } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { RouterModule } from "@angular/router";
+import { AuthService } from "../../services/auth.service";
+import { ChangeNameModalComponent } from "../change-name-modal/change-name-modal.component";
+import { User } from "../../models/user.model";
 
 @Component({
-  selector: 'app-sidebar',
-  templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.scss']
+  selector: "app-sidebar",
+  standalone: true,
+  imports: [CommonModule, RouterModule, ChangeNameModalComponent],
+  templateUrl: "./sidebar.component.html",
+  styleUrls: ["./sidebar.component.scss"],
 })
 export class SidebarComponent {
   @Output() viewChanged = new EventEmitter<string>();
 
-  constructor(private authService: AuthService) { }
+  showChangeNameModal = false;
+  activeView = "myCurrentOrders";
+  currentUser: User | null = null;
+
+  constructor(private authService: AuthService) {
+    this.currentUser = this.authService.currentUser;
+  }
+
+  setActiveView(view: string) {
+    this.activeView = view;
+    this.viewChanged.emit(view);
+  }
 
   showMyCurrentOrders() {
-    this.viewChanged.emit('myCurrentOrders');
+    this.setActiveView("myCurrentOrders");
   }
 
   showAllCurrentOrders() {
-    this.viewChanged.emit('allCurrentOrders');
+    this.setActiveView("allCurrentOrders");
   }
 
   showAllPastOrders() {
-    this.viewChanged.emit('allPastOrders');
+    this.setActiveView("allPastOrders");
   }
 
   showNameChangeModal() {
-    // Implement name change modal logic
+    this.showChangeNameModal = true;
+  }
+
+  closeChangeNameModal() {
+    this.showChangeNameModal = false;
+  }
+
+  onNameUpdated(newName: string) {
+    if (this.currentUser) {
+      this.currentUser.full_name = newName;
+    }
+    this.closeChangeNameModal();
   }
 
   logout() {

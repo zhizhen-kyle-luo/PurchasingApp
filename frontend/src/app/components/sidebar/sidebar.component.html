@@ -1,21 +1,50 @@
 <div class="sidebar">
   <div class="sidebar-header">
-    <img src="assets/Motorsports Logo.png" alt="MIT Motorsports" class="w-16 h-16 mb-2">
+    <img src="assets/Motorsports Logo.png" alt="MIT Motorsports" class="logo" />
     <h1>MIT Motorsports</h1>
   </div>
 
   <div class="user-section">
-    <h2 class="text-white text-lg mb-2">{{ 'requester' }}</h2>
-    <button (click)="showNameChangeModal()" class="text-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
+    <h2 class="text-white text-lg mb-2">{{ currentUser?.role || "User" }}</h2>
+    <button (click)="showNameChangeModal()" class="change-name-btn">
       Change Name
     </button>
   </div>
 
   <nav class="flex-1 flex flex-col">
-    <a href="#" class="nav-item active" (click)="showMyCurrentOrders()">My Current Orders</a>
-    <a href="#" class="nav-item" (click)="showAllCurrentOrders()">All Current Orders</a>
-    <a href="#" class="nav-item" (click)="showAllPastOrders()">All Past Orders</a>
-    <a routerLink="/new-purchase" class="nav-item">New Order</a>
+    <a
+      href="#"
+      class="nav-item"
+      [class.active]="activeView === 'myCurrentOrders'"
+      (click)="showMyCurrentOrders()"
+      >My Current Orders</a
+    >
+    <a
+      href="#"
+      class="nav-item"
+      [class.active]="activeView === 'allCurrentOrders'"
+      (click)="showAllCurrentOrders()"
+      >All Current Orders</a
+    >
+    <a
+      href="#"
+      class="nav-item"
+      [class.active]="activeView === 'allPastOrders'"
+      (click)="showAllPastOrders()"
+      >All Past Orders</a
+    >
+    <a
+      routerLink="/new-purchase"
+      class="nav-item"
+      [class.active]="activeView === 'newOrder'"
+      (click)="setActiveView('newOrder')"
+      >New Order</a
+    >
     <a (click)="logout()" class="nav-item text-red-400 mt-auto">Sign Out</a>
   </nav>
 </div>
+<app-change-name-modal
+  [showModal]="showChangeNameModal"
+  (closeModalEvent)="closeChangeNameModal()"
+  (nameUpdated)="onNameUpdated($event)"
+></app-change-name-modal>
