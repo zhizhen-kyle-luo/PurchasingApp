@@ -3,15 +3,22 @@
   <div class="modal-content">
     <div class="box">
       <h2 class="text-xl font-bold mb-4">Change Name</h2>
-      <button class="modal-close is-large" aria-label="close" (click)="closeModal()"></button>
+      <button class="modal-close" aria-label="close" (click)="closeModal()">
+        &times;
+      </button>
       <form (ngSubmit)="updateName()">
-        <div class="field">
-          <div class="control">
-            <input class="input" type="text" [(ngModel)]="newName" name="newName" placeholder="Enter new name" required>
-          </div>
-        </div>
+        <input
+          class="input"
+          type="text"
+          [(ngModel)]="newName"
+          name="newName"
+          placeholder="Enter new name"
+          required
+        />
         <div class="flex justify-end gap-2">
-          <button type="button" (click)="closeModal()" class="button">Cancel</button>
+          <button type="button" (click)="closeModal()" class="button cancel">
+            Cancel
+          </button>
           <button type="submit" class="button is-link">Update</button>
         </div>
       </form>
