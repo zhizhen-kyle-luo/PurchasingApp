@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, catchError, of } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, of, map } from 'rxjs';
 
 import { User, LoginRequest, RegisterRequest, AuthResponse, PasswordResetRequest, PasswordResetConfirm } from '../models/user.model';
 import { environment } from '../../environments/environment';
@@ -56,12 +56,12 @@ export class AuthService {
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/auth/login`, credentials)
       .pipe(
-        tap(response => {
+        tap((response: AuthResponse) => {
           if (response.success && response.user) {
             this.setCurrentUser(response.user);
           }
         }),
-        catchError(error => {
+        catchError((error: any) => {
           console.error('Login error:', error);
           return of({ success: false, message: 'Login failed' });
         })
@@ -71,12 +71,12 @@ export class AuthService {
   register(userData: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/auth/register`, userData)
       .pipe(
-        tap(response => {
+        tap((response: AuthResponse) => {
           if (response.success && response.user) {
             this.setCurrentUser(response.user);
           }
         }),
-        catchError(error => {
+        catchError((error: any) => {
           console.error('Registration error:', error);
           return of({ success: false, message: 'Registration failed' });
         })
@@ -89,7 +89,7 @@ export class AuthService {
         tap(() => {
           this.clearCurrentUser();
         }),
-        catchError(error => {
+        catchError((error: any) => {
           console.error('Logout error:', error);
           this.clearCurrentUser(); // Clear user even if logout request fails
           return of({ success: true });
@@ -100,7 +100,7 @@ export class AuthService {
   forgotPassword(request: PasswordResetRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/auth/forgot-password`, request)
       .pipe(
-        catchError(error => {
+        catchError((error: any) => {
           console.error('Forgot password error:', error);
           return of({ success: false, message: 'Failed to send reset email' });
         })
@@ -110,25 +110,25 @@ export class AuthService {
   resetPassword(request: PasswordResetConfirm): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/auth/reset-password`, request)
       .pipe(
-        catchError(error => {
+        catchError((error: any) => {
           console.error('Reset password error:', error);
           return of({ success: false, message: 'Failed to reset password' });
         })
       );
   }
 
-  getCurrentUser(): Observable<{ success: boolean; user: User }> {
+  getCurrentUser(): Observable<{ success: boolean; user: User | null }> {
     return this.http.get<{ success: boolean; user: User }>(`${this.API_URL}/auth/me`)
       .pipe(
-        tap(response => {
+        tap((response: { success: boolean; user: User }) => {
           if (response.success && response.user) {
             this.setCurrentUser(response.user);
           }
         }),
-        catchError(error => {
+        catchError((error: any) => {
           console.error('Get current user error:', error);
           this.clearCurrentUser();
-          return of({ success: false, user: null as any });
+          return of({ success: false, user: null });
         })
       );
   }
@@ -136,12 +136,12 @@ export class AuthService {
   updateProfile(userData: Partial<User>): Observable<AuthResponse> {
     return this.http.put<AuthResponse>(`${this.API_URL}/auth/me`, userData)
       .pipe(
-        tap(response => {
+        tap((response: AuthResponse) => {
           if (response.success && response.user) {
             this.setCurrentUser(response.user);
           }
         }),
-        catchError(error => {
+        catchError((error: any) => {
           console.error('Update profile error:', error);
           return of({ success: false, message: 'Failed to update profile' });
         })
@@ -156,11 +156,22 @@ export class AuthService {
 
     return this.http.post(`${this.API_URL}/auth/check-permissions`, request)
       .pipe(
-        catchError(error => {
+        catchError((error: any) => {
           console.error('Check permissions error:', error);
           return of({ success: false, has_permissions: false });
         })
       );
+  }
+
+  updateUserName(newName: string): Observable<User> {
+    return this.updateProfile({ full_name: newName }).pipe(
+      map((response: AuthResponse) => {
+        if (!response.success || !response.user) {
+          throw new Error(response.message || 'Failed to update name');
+        }
+        return response.user;
+      })
+    );
   }
 
   private setCurrentUser(user: User): void {

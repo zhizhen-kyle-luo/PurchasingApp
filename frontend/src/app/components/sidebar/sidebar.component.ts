@@ -49,10 +49,19 @@ export class SidebarComponent {
   }
 
   onNameUpdated(newName: string) {
-    if (this.currentUser) {
-      this.currentUser.full_name = newName;
-    }
-    this.closeChangeNameModal();
+    this.authService.updateUserName(newName).subscribe({
+      next: (user: User) => {
+        if (this.currentUser) {
+          this.currentUser.full_name = user.full_name;
+        }
+        this.closeChangeNameModal();
+      },
+      error: (err: any) => {
+        console.error("Error updating name:", err);
+        // Optionally, show an error message to the user
+        this.closeChangeNameModal();
+      },
+    });
   }
 
   logout() {
