@@ -43,8 +43,8 @@
     <a (click)="logout()" class="nav-item text-red-400 mt-auto">Sign Out</a>
   </nav>
 </div>
-<app-change-name-modal
-  [showModal]="showChangeNameModal"
+<app-change-name-modal 
+  [showModal]="showChangeNameModal" 
   (closeModalEvent)="closeChangeNameModal()"
-  (nameUpdated)="onNameUpdated($event)"
-></app-change-name-modal>
+  (nameUpdated)="onNameUpdated($event)">
+</app-change-name-modal>
