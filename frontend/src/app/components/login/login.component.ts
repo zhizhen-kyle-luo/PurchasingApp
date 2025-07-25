@@ -10,37 +10,38 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, MatSnackBarModule],
   template: `
-    <img src="assets/Motorsports Logo Words.png" alt="" class="background-logo">
-    <div class="bg-white p-10 rounded-xl card-shadow w-96 transform transition-all hover:scale-[1.01]">
-      <div class="text-center mb-8">
-          <h1 class="text-3xl font-bold text-gray-800 mb-4">Welcome Back! 👋</h1>
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-500">
+      <img src="assets/Motorsports Logo Words.png" alt="" class="background-logo">
+      <div class="bg-white p-10 rounded-xl card-shadow w-96 transform transition-all hover:scale-[1.01]">
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-bold text-gray-800 mb-4">Welcome Back! </h1>
           <a routerLink="/register" class="text-blue-500 hover:underline inline-flex items-center">
             Don't have an account? Sign up
             <span class="ml-1">→</span>
           </a>
         </div>
-        
+       
         <div *ngIf="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
           {{ errorMessage }}
         </div>
-        
+       
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5">
           <div class="space-y-1">
             <label class="block text-gray-700 text-sm font-semibold">MIT Email</label>
-            <input type="email" formControlName="email" required 
+            <input type="email" formControlName="email" required
                    class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                    placeholder="username@mit.edu">
           </div>
-          
+         
           <div class="space-y-1">
             <label class="block text-gray-700 text-sm font-semibold">Password</label>
-            <input type="password" formControlName="password" required 
+            <input type="password" formControlName="password" required
                    class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
           </div>
 
           <div class="flex items-center justify-between mt-4">
             <div class="flex items-center">
-              <input type="checkbox" formControlName="remember" id="remember" 
+              <input type="checkbox" formControlName="remember" id="remember"
                      class="h-4 w-4 text-blue-500 border-gray-300 rounded focus:ring-blue-500">
               <label for="remember" class="ml-2 block text-sm text-gray-700">
                 Remember me
@@ -50,14 +51,15 @@ import { AuthService } from '../../services/auth.service';
               Forgot password?
             </a>
           </div>
-          
-          <button type="submit" 
+         
+          <button type="submit"
                   class="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transform transition-all active:scale-[.98] font-medium mt-6"
                   [disabled]="loginForm.invalid || loading">
-            {{ loading ? 'Signing In...' : 'Sign In ✨' }}
+            {{ loading ? 'Signing In...' : 'Sign In' }}
           </button>
         </form>
       </div>
+    </div>
   `,
   styles: [`
     .card-shadow {
