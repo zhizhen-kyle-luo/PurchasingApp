@@ -1,0 +1,46 @@
+<div class="order-card" (click)="showOrderDetails()">
+  <div class="order-header">
+    <div class="order-title">
+      <h3 class="item-name">{{ order.item_name }}</h3>
+      <p class="purchase-date">{{ order.purchase_date | date:'yyyy-MM-dd' }}</p>
+    </div>
+    <div class="badge-container">
+      <!-- Status Badge -->
+      <div class="status-badges">
+        <span *ngIf="order.status === 'Arrived'" class="badge status-arrived">Arrived</span>
+        <span *ngIf="order.status === 'Shipped'" class="badge status-shipped">Shipped</span>
+        <span *ngIf="order.status === 'Purchased'" class="badge status-purchased">Purchased</span>
+        <span *ngIf="order.approval_status === 'Fully Approved' && !order.status" class="badge status-approved">Fully Approved</span>
+        <span *ngIf="order.approval_status === 'Pending Executive Approval'" class="badge status-pending-exec">Pending Executive Approval</span>
+        <span *ngIf="order.approval_status === 'Pending Sublead Approval'" class="badge status-pending-sublead">Pending Sublead Approval</span>
+
+        <!-- Urgency Badge -->
+        <span class="badge" [class]="getUrgencyBadgeClass()">
+          {{ order.urgency }}
+        </span>
+
+        <!-- Deleted Badge -->
+        <span *ngIf="order.is_deleted && order.status !== 'Arrived'" class="badge status-deleted">Deleted</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="order-details">
+    <div class="detail-item">
+      <span class="label">Vendor:</span>
+      <span class="value">{{ order.vendor_name }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Requester:</span>
+      <span class="value">{{ order.requester_name }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Total:</span>
+      <span class="value">${{ getTotalCost().toFixed(2) }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Subteam:</span>
+      <span class="value">{{ order.subteam }}</span>
+    </div>
+  </div>
+</div>

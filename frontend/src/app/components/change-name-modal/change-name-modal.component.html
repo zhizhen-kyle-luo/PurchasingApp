@@ -1,0 +1,50 @@
+<div class="modal" [class.show]="showModal" *ngIf="showModal">
+  <div class="modal-overlay" (click)="closeModal()"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Change Name</h2>
+      <button type="button" class="close-btn" (click)="closeModal()" aria-label="Close">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <form (ngSubmit)="updateName()" class="modal-body">
+      <div class="form-group">
+        <label for="newName" class="form-label">Full Name</label>
+        <input 
+          id="newName"
+          type="text" 
+          [(ngModel)]="newName" 
+          name="newName" 
+          placeholder="Enter your full name" 
+          class="form-input"
+          [class.error]="errorMessage"
+          [disabled]="isLoading"
+          required>
+      </div>
+      
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+      
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          (click)="closeModal()" 
+          class="btn btn-secondary"
+          [disabled]="isLoading">
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="isLoading || !newName.trim()">
+          <span *ngIf="isLoading" class="loading-spinner"></span>
+          {{ isLoading ? 'Updating...' : 'Update Name' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

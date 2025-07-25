@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Purchase Order Approval Required</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #2563eb;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .footer {
+            background-color: #6c757d;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 0 0 8px 8px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .order-details {
+            background-color: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>MIT Motorsports - Purchase Approval Required</h1>
+    </div>
+    
+    <div class="content">
+        <h2>{{ approval_type.title() }} Approval Needed</h2>
+        
+        <p>A new purchase order requires your {{ approval_type }} approval:</p>
+        
+        <div class="order-details">
+            <h3>Order Details</h3>
+            <p><strong>Item:</strong> {{ purchase.item_name }}</p>
+            <p><strong>Vendor:</strong> {{ purchase.vendor_name }}</p>
+            <p><strong>Requester:</strong> {{ purchase.requester_name }}</p>
+            <p><strong>Total Cost:</strong> ${{ "%.2f"|format(purchase.price + purchase.shipping_cost) }}</p>
+            <p><strong>Urgency:</strong> {{ purchase.urgency }}</p>
+            <p><strong>Subteam:</strong> {{ purchase.subteam }}</p>
+            {% if purchase.purpose %}
+            <p><strong>Purpose:</strong> {{ purchase.purpose }}</p>
+            {% endif %}
+        </div>
+        
+        <p>Please review and approve this purchase order in the system.</p>
+        
+        <a href="{{ dashboard_url }}" class="button">Review Order</a>
+    </div>
+    
+    <div class="footer">
+        <p>MIT Motorsports Purchasing System</p>
+        <p>This is an automated notification. Please do not reply to this email.</p>
+    </div>
+</body>
+</html>

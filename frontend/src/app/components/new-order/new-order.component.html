@@ -1,0 +1,130 @@
+<div class="gradient-bg">
+  <img src="assets/Motorsports Logo Words.png" alt="" class="background-logo" />
+  <div class="form-container">
+    <h1 class="text-2xl font-bold text-center mb-8">New Purchase Request</h1>
+    <div class="text-center mb-8">
+      <a
+        routerLink="/dashboard"
+        class="text-blue-500 hover:text-blue-600 inline-flex items-center justify-center"
+      >
+        <svg
+          class="w-4 h-4 mr-1"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        Back to Dashboard
+      </a>
+    </div>
+    <form [formGroup]="orderForm" (ngSubmit)="submitOrder()" class="space-y-6">
+      <div class="question-box" *ngFor="let field of fields">
+        <label class="block text-gray-800 font-semibold mb-2">{{
+          field.label
+        }}</label>
+        <div *ngIf="field.description" class="text-gray-600 text-sm mb-3">
+          <ng-container *ngFor="let desc of field.description">
+            <p class="mb-1" [innerHTML]="desc"></p>
+          </ng-container>
+        </div>
+        <ng-container [ngSwitch]="field.type">
+          <textarea
+            *ngSwitchCase="'textarea'"
+            [formControlName]="field.name"
+            class="form-input w-full px-3 py-2 rounded-md"
+            rows="3"
+            [required]="field.name !== 'notes'"
+          ></textarea>
+          <select
+            *ngSwitchCase="'select'"
+            [formControlName]="field.name"
+            class="form-input w-full px-3 py-2 rounded-md"
+            [required]="true"
+            (change)="onSelectChange(field.name, $event)"
+          >
+            <option *ngFor="let opt of field.options" [value]="opt.value">
+              {{ opt.text }}
+            </option>
+          </select>
+          <input
+            *ngSwitchDefault
+            [type]="field.type"
+            [formControlName]="field.name"
+            class="form-input w-full px-3 py-2 rounded-md"
+            [required]="true"
+          />
+        </ng-container>
+      </div>
+      <!-- Urgency -->
+      <div class="question-box">
+        <label class="block text-gray-800 font-semibold mb-2"
+          >Is this an urgent or special/large order?</label
+        >
+        <div class="text-gray-600 text-sm mb-3">
+          <p>
+            <strong>Urgent:</strong> You need this ordered ASAP. Must be
+            exec-approved. Write what shipping (2-day, etc) is needed as a
+            comment at the end of the form. Reach out to purchasing leads ASAP.
+          </p>
+          <p>
+            <strong>Special/large:</strong> Over $3k or it will need cooperation
+            between exec, purchaser, requestor, and Sandi. If yes, prepare by
+            having an itemized order and reach out to purchasing leads ASAP.
+          </p>
+        </div>
+        <select
+          formControlName="urgency"
+          required
+          class="form-input w-full px-3 py-2 rounded-md"
+        >
+          <option value="Neither">Neither</option>
+          <option value="Urgent">Urgent</option>
+          <option value="Special/Large">Special/Large</option>
+          <option value="Both">Both</option>
+        </select>
+      </div>
+      <!-- Sublead/Exec Verifier (dynamic) -->
+      <div class="question-box" *ngIf="showSubleadVerifier">
+        <label class="block text-gray-800 font-semibold mb-2"
+          >Which system lead can verify your purchase?</label
+        >
+        <select
+          formControlName="sublead_verifier"
+          required
+          class="form-input w-full px-3 py-2 rounded-md"
+        >
+          <option value="lzz20051017@gmail.com">Test</option>
+        </select>
+      </div>
+      <div class="question-box">
+        <label class="block text-gray-800 font-semibold mb-2"
+          >Which exec can verify your purchase?</label
+        >
+        <select
+          formControlName="exec_verifier"
+          required
+          class="form-input w-full px-3 py-2 rounded-md"
+        >
+          <option value="zhizhen.luo07@gmail.com">Test</option>
+          <option value="hezpen@mit.edu">Hez Pendley</option>
+          <option value="alex154@mit.edu">Alex Mason</option>
+          <option value="mochan@mit.edu">Monica Chan</option>
+          <option value="cttewari@mit.edu">Claudius Tewari</option>
+          <option value="ericz217@mit.edu">Eric Zhou</option>
+        </select>
+      </div>
+      <button
+        type="submit"
+        class="w-full bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transform transition-all active:scale-[.98] font-medium mt-8"
+      >
+        Submit Purchase Request
+      </button>
+    </form>
+  </div>
+</div>

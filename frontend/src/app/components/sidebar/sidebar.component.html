@@ -1,0 +1,56 @@
+<div class="sidebar">
+  <div class="sidebar-header">
+    <img src="assets/Motorsports Logo.png" alt="MIT Motorsports">
+    <h1>MY25</h1>
+  </div>
+
+  <div class="user-section">
+    <div class="user-name">{{ currentUser?.full_name || 'User' }}</div>
+    <button (click)="showNameChangeModal()" class="change-name-btn">
+      Change Name
+    </button>
+  </div>
+
+  <nav class="nav-menu">
+    <a 
+      href="#" 
+      class="nav-item" 
+      [class.active]="activeView === 'myCurrentOrders'"
+      (click)="setActiveView('myCurrentOrders'); $event.preventDefault()">
+      My Current Orders
+    </a>
+    <a 
+      href="#" 
+      class="nav-item" 
+      [class.active]="activeView === 'allCurrentOrders'"
+      (click)="setActiveView('allCurrentOrders'); $event.preventDefault()">
+      All Current Orders
+    </a>
+    <a 
+      href="#" 
+      class="nav-item" 
+      [class.active]="activeView === 'allPastOrders'"
+      (click)="setActiveView('allPastOrders'); $event.preventDefault()">
+      All Past Orders
+    </a>
+    <a 
+      routerLink="/new-purchase" 
+      class="nav-item" 
+      [class.active]="activeView === 'newOrder'"
+      (click)="setActiveView('newOrder')">
+      New Order
+    </a>
+    <a 
+      href="#" 
+      class="nav-item sign-out" 
+      (click)="logout(); $event.preventDefault()">
+      Sign Out
+    </a>
+  </nav>
+</div>
+
+<app-change-name-modal 
+  [showModal]="showChangeNameModal" 
+  (closeModalEvent)="closeChangeNameModal()"
+  (nameUpdated)="onNameUpdated($event)">
+</app-change-name-modal>

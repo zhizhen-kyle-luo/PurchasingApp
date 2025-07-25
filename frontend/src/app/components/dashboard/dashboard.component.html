@@ -1,0 +1,51 @@
+<div class="dashboard-container">
+  <app-sidebar (viewChanged)="onViewChanged($event)"></app-sidebar>
+  
+  <div class="main-content">
+    <div class="content-header">
+      <h1 class="page-title">{{ title }}</h1>
+    </div>
+    
+    <div class="orders-container" [ngSwitch]="currentView">
+      <div *ngSwitchCase="'myCurrentOrders'" class="orders-grid">
+        <app-order-card 
+          *ngFor="let order of myCurrentOrders" 
+          [order]="order" 
+          (cardClick)="showOrderDetails(order)">
+        </app-order-card>
+        <div *ngIf="myCurrentOrders.length === 0" class="empty-state">
+          <p>No current orders found.</p>
+        </div>
+      </div>
+      
+      <div *ngSwitchCase="'allCurrentOrders'" class="orders-grid">
+        <app-order-card 
+          *ngFor="let order of allCurrentOrders" 
+          [order]="order" 
+          (cardClick)="showOrderDetails(order)">
+        </app-order-card>
+        <div *ngIf="allCurrentOrders.length === 0" class="empty-state">
+          <p>No current orders found.</p>
+        </div>
+      </div>
+      
+      <div *ngSwitchCase="'allPastOrders'" class="orders-grid">
+        <app-order-card 
+          *ngFor="let order of allPastOrders" 
+          [order]="order" 
+          (cardClick)="showOrderDetails(order)">
+        </app-order-card>
+        <div *ngIf="allPastOrders.length === 0" class="empty-state">
+          <p>No past orders found.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-order-details-modal 
+  [order]="selectedOrder" 
+  [showModal]="showModal" 
+  (closeModalEvent)="closeModal()" 
+  (orderUpdated)="loadOrders()">
+</app-order-details-modal>
